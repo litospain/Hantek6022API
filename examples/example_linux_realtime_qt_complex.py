@@ -29,12 +29,12 @@ import traceback
 #--------------------------------------------------
 voltage_range     = 1 # 1 (5V), 2 (2.6V), 5 or 10
 sample_rate_index = 8 # sample rate in MHz or in 10khz
-sample_rate       = sample_rate_index * 1000 * 10
+sample_rate       = sample_rate_index * 1000 * 1000
 numchannels       = 1 # number of channels to process (use 1 or 2)
 numseconds        = 0 # number of seconds to sample (use 0 for infinity)
 blocksize         = 100*6*1024 # should be divisible by 6*1024
 block_splits_count = 10 # to make finer grained statistics
-max_blocks_kept   = 10 # number of blocks to keep in memory and in plots
+max_blocks_kept   = 30 # number of blocks to keep in memory and in plots
 alternative       = 1 # choose ISO 3072 bytes per 125 us
 
 scope = Oscilloscope()
@@ -67,6 +67,12 @@ paused = False
 #--------------------------------------------------
 # Worker threads: processing data
 #--------------------------------------------------
+def samples_to_seconds(samplesCount):
+	global sample_rate, numchannels
+	sample_rate_per_channel = sample_rate / numchannels
+	print('samples_to_seconds()',samplesCount / sample_rate_per_channel)
+	return samplesCount / sample_rate_per_channel
+
 def reshape_fit(a, newColCount):
 	to_add = len(a) % newColCount
 	if to_add > 0: to_add = newColCount - to_add
@@ -220,7 +226,7 @@ class Gui:
 		for ch in range(0, numchannels):
 			self.p_minmax          .append(self.win.addPlot(row=1, col=ch, title='Ch{} min,max voltage'     .format(ch)))
 			self.p_diff            .append(self.win.addPlot(row=2, col=ch, title='Ch{} min,max voltage diff'.format(ch)))
-			self.p_detail          .append(self.win.addPlot(row=3, col=0,  title='CH{} detail'              .format(ch)))
+			self.p_detail          .append(self.win.addPlot(row=3, col=ch, title='CH{} detail'              .format(ch)))
 			self.lr                .append(pg.LinearRegionItem([1,2]))
 			self.lr      [ch].setZValue(-10)
 			self.lr      [ch].sigRegionChanged.connect(lambda: self.lr_OnRegionChanged(ch))
@@ -232,11 +238,16 @@ class Gui:
 			#p_minmax[ch].addItem(lr[ch])
 			self.p_minmax[ch].getAxis('left').setLabel('Voltage'     , units='V')
 			self.p_diff  [ch].getAxis('left').setLabel('Voltage diff', units='V')
+			self.p_detail[ch].getAxis('left').setLabel('Voltage'     , units='V')
+			self.p_minmax[ch].getAxis('bottom').setLabel('Time', units='s')
+			self.p_diff  [ch].getAxis('bottom').setLabel('Time', units='s')
+			self.p_detail[ch].getAxis('bottom').setLabel('Time', units='s')
 			self.p_minmax[ch].setMouseEnabled(x=True, y=False)
 			self.p_diff  [ch].setMouseEnabled(x=True, y=False)
 			self.p_detail[ch].setMouseEnabled(x=True, y=False)
 			self.p_detail[ch].disableAutoRange('x')
-			self.p_detail[ch].setXRange(0, blocksize / numchannels, padding=0)
+			print('p_detail setXRange(0, ',samples_to_seconds(blocksize / numchannels), blocksize, numchannels)
+			self.p_detail[ch].setXRange(0, samples_to_seconds(blocksize / numchannels), padding=0)
 			self.curve_min         .append(self.p_minmax[ch].plot(np.array([]), pen=(255, 0, 0)))
 			self.curve_max         .append(self.p_minmax[ch].plot(np.array([]), pen=(0, 255, 0)))
 			self.curve_min_max_diff.append(self.p_diff  [ch].plot(np.array([])))
@@ -255,13 +266,15 @@ class Gui:
 				#print('lr setRegion:', r)
 				#self.lr[ch].setRegion(r)
 				self.p_minmax[ch].addItem(self.lr[ch])
-				r = [(len(data)-2) * blocksize / numchannels, (len(data)-1) * blocksize / numchannels]
+				r = [samples_to_seconds((len(data)-2) * blocksize / numchannels),
+					 samples_to_seconds((len(data)-1) * blocksize / numchannels)]
 				#self.p_detail[ch].setXRange(*r, padding=0)
 				#self.p_diff  [ch].addItem(self.lr[ch])
 			else:
 				self.p_minmax[ch].removeItem(self.lr[ch])
 				#self.p_diff  [ch].removeItem(self.lr[ch])
-				self.p_detail[ch].setXRange(0, blocksize / numchannels, padding=0)
+				print('p_detail setXRange(0, ',samples_to_seconds(blocksize / numchannels), blocksize, numchannels)
+				self.p_detail[ch].setXRange(0, samples_to_seconds(blocksize / numchannels), padding=0)
 		self.update()
 		#QtGui.QMessageBox.information(None, 'Title', 'paused:{}'.format(paused))
 
@@ -271,18 +284,16 @@ class Gui:
 		#return
 		if not paused: return
 		#r = [0, 100]
-		r = [self.lr[ch].getRegion()[0] * blocksize / numchannels / block_splits_count,
-			 self.lr[ch].getRegion()[1] * blocksize / numchannels / block_splits_count]
+		r = self.lr[ch].getRegion()
 		print('lr_OnRegionChanged() r:',self.lr[ch].getRegion(),' -> ',r)
-		self.p_detail[ch].setXRange(r[0], r[1], padding=0)
+		self.p_detail[ch].setXRange(*r, padding=0)
 
 	def p_detail_OnXRangeChanged(self, ch):
 		global paused, blocksize, numchannels
 		#return
 		if not paused: return
 		#r = [0, 10]
-		r = [self.p_detail[ch].getViewBox().viewRange()[0][0] / blocksize * numchannels * block_splits_count,
-			 self.p_detail[ch].getViewBox().viewRange()[0][1] / blocksize * numchannels * block_splits_count]
+		r = self.p_detail[ch].getViewBox().viewRange()[0]
 		print('p_detail_OnXRangeChanged() range:',self.p_detail[ch].getViewBox().viewRange(),' range[0]:',self.p_detail[ch].getViewBox().viewRange()[0],' -> ',r)
 		self.lr[ch].setRegion(r)
 
@@ -293,6 +304,13 @@ class Gui:
 	def p_diff_OnXRangeChanged(self, ch):
 		r = self.p_diff[ch].getViewBox().viewRange()[0]
 		self.p_minmax[ch].setXRange(*r, padding=0)
+
+	def set_curve_data_full(self, curve, a):
+		curve.setData(y=a, x=np.linspace(0, samples_to_seconds(len(a)-1), len(a)))
+
+	def set_curve_data_splits(self, curve, a):
+		global blocksize, block_splits_count
+		curve.setData(y=a, x=np.linspace(0, samples_to_seconds((len(a)-1) * blocksize / block_splits_count), len(a)))
 
 	def update(self):
 		global paused, data, data_lock, max_blocks_kept
@@ -338,20 +356,22 @@ class Gui:
 		#print("mins",mins)
 		#print("maxs",maxs)
 		for ch in range(0, numchannels):
-			self.curve_min         [ch].setData(mins        [ch])
-			self.curve_max         [ch].setData(maxs        [ch])
-			self.curve_min_max_diff[ch].setData(min_max_diff[ch])
+			self.set_curve_data_splits(self.curve_min         [ch], mins        [ch])
+			self.set_curve_data_splits(self.curve_max         [ch], maxs        [ch])
+			self.set_curve_data_splits(self.curve_min_max_diff[ch], min_max_diff[ch])
 			if paused:
-				self.curve_detail[ch].setData(raw_np[ch])
+				self.set_curve_data_full(self.curve_detail[ch], raw_np[ch])
 				#r = [(len(data)-2) * block_splits_count, (len(data)-1) * block_splits_count]
-				r = [(len(data)-2) * blocksize / numchannels, (len(data)-1) * blocksize / numchannels]
-				print('p_detail setXRange:', r)
+				r = [samples_to_seconds((len(data)-2) * blocksize / numchannels),
+					 samples_to_seconds((len(data)-1) * blocksize / numchannels)]
+				print('p_detail setXRange:', r, len(data), blocksize, numchannels)
 				#self.lr[ch].setRegion(r)
 				self.p_detail[ch].setXRange(*r, padding=0)
 				#self.lr_OnRegionChanged(ch)
 			else:
-				if 'raw_np' in last_block[ch]: self.curve_detail[ch].setData(last_block[ch]['raw_np_voltage'])
-			r = [0, (len(data)-1) * block_splits_count]
+				if 'raw_np_voltage' in last_block[ch]: self.set_curve_data_full(self.curve_detail[ch], last_block[ch]['raw_np_voltage'])
+
+			r = [0, samples_to_seconds((len(data)-1) * blocksize / numchannels)]
 			print('p_minmax.setXRange()',r)
 			self.p_minmax[ch].setXRange(*r, padding=0)
 		t4 = time.time()
