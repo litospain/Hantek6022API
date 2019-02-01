@@ -31,7 +31,7 @@ If you have you have your own examples or have seen this library used, please le
 If you're on Linux, you're also in luck, as I've provided some reverse engineered binding for libusb to operate this 
 little device. You may wish to first add 60-hantek-6022-usb.rules to your udev rules, via
 
-     sudo cp 60-hantek-6022-usb.rules /lib/udev/rules.d/
+     sudo cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
 
 After you've done this, the scope should automatically come up with the correct permissions to be accessed without a
 root user.
