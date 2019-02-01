@@ -5,6 +5,11 @@ fw_custom:
 
 install:
 	python3 setup.py install
+	cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
 
 deb:
-	checkinstall --requires python3-libusb1
+	checkinstall --requires python3-libusb1 --install=no
+
+clean:
+	-rm backup-*.tgz
+	-rm *~ .*~

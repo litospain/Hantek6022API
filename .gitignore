@@ -34,3 +34,12 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Backups
+*~
+
+# Debian
+description-pak
+doc-pak
+*.deb
+backup-*.tgz

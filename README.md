@@ -43,10 +43,23 @@ You need to compile the custom firmware.  Install `sdcc` for this.  Then run `ma
     cd PyHT6022/HantekFirmware/custom
     make
 
+Install the python modules and the firmware (e.g. into /usr/local/lib/python3.5/dist-packages/Python-Hantek...).
+
+    sudo python3 setup.py install
+
+Or create a debian package
+
+    sudo make
+    sudo make deb 
+
+Install the debian package
+
+    dpkg -i hantek6022api_...
+
 With the device plugged in, run the example_linux_flashfirmware.py example,
 
     python examples/example_linux_flashfirmware.py
-     
+
 to bootstrap the scope for use. You can then write your own programs, or look at the current channel 1 scope trace via
 
     python examples/example_linux_scopevis.py
@@ -62,7 +75,7 @@ One excellent ultimate goal for this would to make it play nice with cheap ARM S
 this could be used as a quick and dirty DAQ for many interesting systems.
 
 
-For additional (interesting) details, the inquisitive reader should read:
+For additional (interesting) details, the inquisitive reader should take two or three hours and read:
 http://www.eevblog.com/forum/testgear/hantek-6022be-20mhz-usb-dso/ 
 
 UPDATE: If you're interested in contributing and updating this repo, I'd be glad to have help maintaining it.
