@@ -31,7 +31,7 @@ If you have you have your own examples or have seen this library used, please le
 If you're on Linux, you're also in luck, as I've provided some reverse engineered binding for libusb to operate this 
 little device. You may wish to first add 60-hantek-6022-usb.rules to your udev rules, via
 
-     sudo cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
+    sudo cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
 
 After you've done this, the scope should automatically come up with the correct permissions to be accessed without a
 root user.
@@ -47,14 +47,23 @@ Install the python modules and the firmware (e.g. into /usr/local/lib/python3.5/
 
     sudo python3 setup.py install
 
-Or create a debian package
+The provided Makefile simplifies the steps above a little bit
 
-    sudo make
-    sudo make deb 
+Build the firmware:
 
-Install the debian package
+    make fw_custom
 
-    dpkg -i hantek6022api_...
+Install modules and firmware:
+
+    sudo make install
+
+Create a debian package:
+
+    make deb
+
+that can be installed with
+
+    sudo dpkg -i hantek6022api_...
 
 With the device plugged in, run the example_linux_flashfirmware.py example,
 
