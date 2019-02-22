@@ -1,6 +1,9 @@
+#!/usr/bin/python3
+
 __author__ = 'Robert Cope'
 
 from PyHT6022.LibUsbScope import Oscilloscope
+from PyHT6022.HantekFirmware import mod_firmware_01
 import time
 
 iterations = 50
@@ -21,6 +24,9 @@ time_fxn = time.time
 scope = Oscilloscope()
 scope.setup()
 scope.open_handle()
+
+# modded firmware needed! scope.build_data_reader() uses bulk transfer only
+scope.flash_firmware( mod_firmware_01 )
 
 scope.set_ch1_voltage_range(voltage_range)
 for sample_rate_index in [0x30, 0x10, 0x08, 0x04, 0x01, 0x32, 0x14, 0x0A]:
