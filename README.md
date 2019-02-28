@@ -1,4 +1,6 @@
-# Hantek6022API (Version 0.0.2)
+# Hantek6022API [![Build status](https://ci.appveyor.com/api/projects/status/github/Ho-Ro/Hantek6022API?branch=master&svg=true)](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) [![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
+
+This repo is a fork of [github.com/jhoenicke/Hantek6022API](https://github.com/jhoenicke/Hantek6022API) 
 
 ![Reference Oscillator Trace](https://raw.githubusercontent.com/rpcope1/Hantek6022API/master/HT6022BEBuiltInOscillator.png)
 
