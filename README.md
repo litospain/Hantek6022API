@@ -1,8 +1,10 @@
-# Hantek6022API [![Build status](https://ci.appveyor.com/api/projects/status/github/Ho-Ro/Hantek6022API?branch=master&svg=true)](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) [![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
+# Hantek6022API
+
+[![Build status](https://ci.appveyor.com/api/projects/status/github/Ho-Ro/Hantek6022API?branch=master&svg=true)](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) [![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
 
 This repo is a fork of [github.com/jhoenicke/Hantek6022API](https://github.com/jhoenicke/Hantek6022API) 
 
-![Reference Oscillator Trace](https://raw.githubusercontent.com/rpcope1/Hantek6022API/master/HT6022BEBuiltInOscillator.png)
+<img alt="Scope Visualisation Example" width="100%" src="docs/images/HT6022BEBuiltInOscillator.png">
 
 Hantek 6022BE Python API for Windows and Linux. This is a API for Python via ctypes for Hantek's SDK for the 
 ultra-cheap,  reasonably usable (and hackable) 6022BE DSO, with a libusb implementation via libusb1 for Linux. 
@@ -65,7 +67,7 @@ Create a debian package:
 
 that can be installed with
 
-    sudo dpkg -i hantek6022api_...
+    sudo dpkg -i dist/hantek6022api_...
 
 With the device plugged in, run the example_linux_flashfirmware.py example,
 

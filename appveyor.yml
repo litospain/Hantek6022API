@@ -23,4 +23,4 @@ build_script:
 
 artifacts:
 - path: hantek6022api_*_amd64.deb
-  name: hantek6022api_*_amd64.deb
+  name: Debian package
