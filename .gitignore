@@ -37,6 +37,8 @@ nosetests.xml
 
 # Backups
 *~
+*.orig
+*.test
 
 # Debian
 doc-pak
