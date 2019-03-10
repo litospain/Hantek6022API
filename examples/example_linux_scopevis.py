@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 __author__ = 'Robert Cope'
 
 from PyHT6022.LibUsbScope import Oscilloscope
@@ -12,9 +14,11 @@ def apply_data_smoothing(data, window=1):
     new_data.extend(data[-window:])
     return new_data
 
-sample_rate_index = 0x04
+sample_rate_index = 0x01
 voltage_range = 0x01
-data_points = 0x2000
+# skip first samples due to unstable xfer
+skip = 2 * 0x400 
+data_points = skip + 20 * 0x400
 
 scope = Oscilloscope()
 scope.setup()
@@ -24,8 +28,8 @@ scope.set_ch1_voltage_range(voltage_range)
 
 ch1_data, _ = scope.read_data(data_points)#,raw=True)#timeout=1)
 
-voltage_data = scope.scale_read_data(ch1_data, voltage_range)
-timing_data, _ = scope.convert_sampling_rate_to_measurement_times(data_points, sample_rate_index)
+voltage_data = scope.scale_read_data(ch1_data[skip:], voltage_range)
+timing_data, _ = scope.convert_sampling_rate_to_measurement_times(data_points-skip, sample_rate_index)
 scope.close_handle()
 
 if len(timing_data) != len(voltage_data):
