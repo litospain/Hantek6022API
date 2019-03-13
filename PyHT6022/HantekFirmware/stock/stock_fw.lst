@@ -143,7 +143,7 @@ L0081:
 
   0098 020446		LJMP L0446
 
-  009B 02038C		LJMP L038C
+  009B 0204D5		LJMP L04D5
 
   009E 0204D5		LJMP L04D5
 
@@ -463,6 +463,7 @@ L029F:
   02A9 E0    		MOVX A, @DPTR
   02AA F535  		MOV 35h, A
   02AC 24FE  		ADD A, #0FEh
+L02AE:
   02AE 601A  		JZ L02CA
   02B0 24FD  		ADD A, #0FDh
   02B2 600D  		JZ L02C1
@@ -506,139 +507,152 @@ L02E5:
   02F0 F535  		MOV 35h, A
   02F2 120EF2		LCALL L0EF2
   02F5 03    		RR A
-  02F6 58    		ANL A, R0
-  02F7 0103  		AJMP L0003
+  02F6 8801  		MOV 1h, R0
+  02F8 03    		RR A
+  02F9 7404  		MOV A, #4h
+  02FB 03    		RR A
+  02FC 6008  		JZ L0306
+  02FE 03    		RR A
+  02FF C20A  		CLR 0Ah
+  0301 03    		RR A
+  0302 4D    		ORL A, R5
+  0303 1003AF		JBC 3h, L02B5
+L0306:
+  0306 14    		DEC A
+  0307 03    		RR A
+  0308 3B    		ADDC A, R3
+  0309 18    		DEC R0
+  030A 03    		RR A
+  030B 29    		ADD A, R1
+  030C 1E    		DEC R6
+  030D 03    		RR A
+  030E 17    		DEC @R1
+  030F 30039C		JNB 3h, L02AE
+  0312 32    		RETI
 
-  02F9 50    		DB 050h ; 'P'
-  02FA 02    		DB 002h 
-  02FB 03    		DB 003h 
-  02FC 48    		DB 048h ; 'H'
-  02FD 04    		DB 004h 
-  02FE 03    		DB 003h 
-  02FF 40    		DB 040h ; '@'
-  0300 08    		DB 008h 
-  0301 03    		DB 003h 
-  0302 70    		DB 070h ; 'p'
-  0303 0A    		DB 00Ah 
-  0304 03    		DB 003h 
-  0305 38    		DB 038h ; '8'
-  0306 0C    		DB 00Ch 
-  0307 03    		DB 003h 
-  0308 30    		DB 030h ; '0'
-  0309 10    		DB 010h 
-  030A 03    		DB 003h 
-  030B 68    		DB 068h ; 'h'
-  030C 14    		DB 014h 
-  030D 03    		DB 003h 
-  030E 28    		DB 028h ; '('
-  030F 18    		DB 018h 
-  0310 03    		DB 003h 
-  0311 21    		DB 021h ; '!'
-  0312 1E    		DB 01Eh 
-  0313 03    		DB 003h 
-  0314 1D    		DB 01Dh 
-  0315 30    		DB 030h ; '0'
-  0316 03    		DB 003h 
-  0317 60    		DB 060h ; '`'
-  0318 32    		DB 032h ; '2'
-  0319 00    		DB 000h 
-  031A 00    		DB 000h 
-  031B 03    		DB 003h 
-  031C D3    		DB 0D3h 
-  031D 74EA  		MOV A, #0EAh
-  031F 8002  		SJMP L0323
-
-  0321 74AA  		MOV A, #0AAh
-L0323:
+  0313 00    		DB 000h 
+  0314 00    		DB 000h 
+  0315 03    		DB 003h 
+  0316 D3    		DB 0D3h 
+  0317 90    		DB 090h 
+  0318 E6    		DB 0E6h 
+  0319 01    		DB 001h 
+  031A 74    		DB 074h ; 't'
+  031B EA    		DB 0EAh 
+  031C F0    		DB 0F0h 
+  031D 90E050		MOV DPTR, #0E050h
+  0320 74FF  		MOV A, #0FFh
+  0322 F0    		MOVX @DPTR, A
   0323 751A01		MOV 1Ah, #1h
-  0326 805E  		SJMP L0386
+  0326 0203D3		LJMP L03D3
 
-  0328 7901  		MOV R1, #1h
-  032A 7A01  		MOV R2, #1h
-  032C 7B09  		MOV R3, #9h
-  032E 8046  		SJMP L0376
+  0329 90    		DB 090h 
+  032A E6    		DB 0E6h 
+  032B 01    		DB 001h 
+  032C 74    		DB 074h ; 't'
+  032D AA    		DB 0AAh 
+  032E F0    		DB 0F0h 
+  032F 90    		DB 090h 
+  0330 E0    		MOVX A, @DPTR
+  0331 5074  		JNC L03A7
+  0333 FF    		MOV R7, A
+  0334 F0    		MOVX @DPTR, A
+  0335 751A01		MOV 1Ah, #1h
+  0338 0203D3		LJMP L03D3
 
-  0330 7901  		MOV R1, #1h
-  0332 7A01  		MOV R2, #1h
-  0334 7B01  		MOV R3, #1h
-  0336 803E  		SJMP L0376
+  033B 90    		DB 090h 
+  033C E6    		DB 0E6h 
+  033D 01    		DB 001h 
+  033E 74    		DB 074h ; 't'
+  033F CA    		DB 0CAh 
+  0340 F0    		MOVX @DPTR, A
+  0341 90E050		MOV DPTR, #0E050h
+  0344 74FB  		MOV A, #0FBh
+  0346 F0    		MOVX @DPTR, A
+  0347 751A01		MOV 1Ah, #1h
+  034A 0203D3		LJMP L03D3
 
-  0338 7901  		MOV R1, #1h
-  033A 7A02  		MOV R2, #2h
-  033C 7B01  		MOV R3, #1h
-  033E 8036  		SJMP L0376
+  034D 90    		DB 090h 
+  034E E6    		DB 0E6h 
+  034F 01    		DB 001h 
+  0350 74CA  		MOV A, #0CAh
+  0352 F0    		MOVX @DPTR, A
+  0353 90E040		MOV DPTR, #0E040h
+  0356 7401  		MOV A, #1h
+  0358 F0    		MOVX @DPTR, A
+  0359 A3    		INC DPTR
+  035A F0    		MOVX @DPTR, A
+  035B E4    		CLR A
+  035C F51A  		MOV 1Ah, A
+  035E 8073  		SJMP L03D3
 
-  0340 7902  		MOV R1, #2h
-  0342 7A03  		MOV R2, #3h
-  0344 7B01  		MOV R3, #1h
-  0346 802E  		SJMP L0376
+  0360 90E601		MOV DPTR, #0E601h
+  0363 74CA  		MOV A, #0CAh
+  0365 F0    		MOVX @DPTR, A
+  0366 90E040		MOV DPTR, #0E040h
+  0369 7402  		MOV A, #2h
+  036B F0    		MOVX @DPTR, A
+  036C A3    		INC DPTR
+  036D 04    		INC A
+  036E F0    		MOVX @DPTR, A
+  036F E4    		CLR A
+  0370 F51A  		MOV 1Ah, A
+  0372 805F  		SJMP L03D3
 
-  0348 7905  		MOV R1, #5h
-  034A 7A06  		MOV R2, #6h
-  034C 7B01  		MOV R3, #1h
-  034E 8026  		SJMP L0376
+  0374 90    		DB 090h 
+  0375 E6    		DB 0E6h 
+  0376 01    		DB 001h 
+  0377 74    		DB 074h ; 't'
+  0378 CA    		DB 0CAh 
+  0379 F0    		DB 0F0h 
+  037A 90    		DB 090h 
+  037B E0    		DB 0E0h 
+  037C 40    		DB 040h ; '@'
+  037D 74    		DB 074h ; 't'
+  037E 05    		DB 005h 
+  037F F0    		DB 0F0h 
+  0380 A3    		DB 0A3h 
+  0381 04    		DB 004h 
+  0382 F0    		DB 0F0h 
+  0383 E4    		DB 0E4h 
+  0384 F5    		DB 0F5h 
+  0385 1A    		DB 01Ah 
+  0386 80    		DB 080h 
+  0387 4B    		DB 04Bh ; 'K'
+  0388 90    		DB 090h 
+  0389 E6    		DB 0E6h 
+  038A 01    		DB 001h 
+  038B 74    		DB 074h ; 't'
+  038C CA    		XCH A, R2
+  038D F0    		MOVX @DPTR, A
+  038E 90E040		MOV DPTR, #0E040h
+  0391 7417  		MOV A, #17h
+  0393 F0    		MOVX @DPTR, A
+  0394 A3    		INC DPTR
+  0395 04    		INC A
+  0396 F0    		MOVX @DPTR, A
+  0397 E4    		CLR A
+  0398 F51A  		MOV 1Ah, A
+  039A 8037  		SJMP L03D3
 
-  0350 790B  		MOV R1, #0Bh
-  0352 7A0C  		MOV R2, #0Ch
-  0354 7B01  		MOV R3, #1h
-  0356 801E  		SJMP L0376
-
-  0358 7917  		MOV R1, #17h
-  035A 7A18  		MOV R2, #18h
-  035C 7B01  		MOV R3, #1h
-  035E 8016  		SJMP L0376
-
-  0360 792F  		MOV R1, #2Fh
-  0362 7A30  		MOV R2, #30h
-  0364 7B01  		MOV R3, #1h
-  0366 800E  		SJMP L0376
-
-  0368 7977  		MOV R1, #77h
-  036A 7A78  		MOV R2, #78h
-  036C 7B01  		MOV R3, #1h
-  036E 8006  		SJMP L0376
-
-  0370 79EF  		MOV R1, #0EFh
-  0372 7AF0  		MOV R2, #0F0h
-  0374 7B01  		MOV R3, #1h
-L0376:
-  0376 90E040		MOV DPTR, #0E040h
-  0379 E9    		MOV A, R1
-  037A F0    		MOVX @DPTR, A
-  037B A3    		INC DPTR
-  037C EA    		MOV A, R2
-  037D F0    		MOVX @DPTR, A
-  037E A3    		INC DPTR
-  037F EB    		MOV A, R3
-  0380 F0    		MOVX @DPTR, A
-  0381 E4    		CLR A
-  0382 F51A  		MOV 1Ah, A
-  0384 74CA  		MOV A, #0CAh
-L0386:
-  0386 90E601		MOV DPTR, #0E601h
-  0389 F0    		MOVX @DPTR, A
-  038A 8047  		SJMP L03D3
-
-L038C:
-  038C E4    		CLR A
-  038D 90E68A		MOV DPTR, #0E68Ah
-  0390 F0    		MOVX @DPTR, A
-  0391 90E68B		MOV DPTR, #0E68Bh
-  0394 F0    		MOVX @DPTR, A
-L0395:
-  0395 90E6A0		MOV DPTR, #0E6A0h
-  0398 E0    		MOVX A, @DPTR
-  0399 20E1F9		JB ACC.1, L0395
-  039C 90E740		MOV DPTR, #0E740h
-  039F E0    		MOVX A, @DPTR
-  03A0 600A  		JZ L03AC
-  03A2 9403  		SUBB A, #3h
-  03A4 5006  		JNC L03AC
-  03A6 240A  		ADD A, #0Ah
-  03A8 90E61A		MOV DPTR, #0E61Ah
-  03AB F0    		MOVX @DPTR, A
-L03AC:
-  03AC 0204D7		LJMP L04D7
+  039C 90    		DB 090h 
+  039D E6    		DB 0E6h 
+  039E 01    		DB 001h 
+  039F 74    		DB 074h ; 't'
+  03A0 CA    		DB 0CAh 
+  03A1 F0    		DB 0F0h 
+  03A2 90    		DB 090h 
+  03A3 E0    		DB 0E0h 
+  03A4 40    		DB 040h ; '@'
+  03A5 74    		DB 074h ; 't'
+  03A6 30    		DB 030h ; '0'
+L03A7:
+  03A7 F0    		MOVX @DPTR, A
+  03A8 A3    		INC DPTR
+  03A9 F0    		MOVX @DPTR, A
+  03AA E4    		CLR A
+  03AB F51A  		MOV 1Ah, A
+  03AD 8024  		SJMP L03D3
 
   03AF 90E601		MOV DPTR, #0E601h
   03B2 74CA  		MOV A, #0CAh
@@ -1968,12 +1982,12 @@ L0B7B:
   0B90 00    		NOP
   0B91 00    		NOP
   0B92 00    		NOP
-  0B93 7482  		MOV A, #82h
+  0B93 7402  		MOV A, #2h
   0B95 F0    		MOVX @DPTR, A
   0B96 00    		NOP
   0B97 00    		NOP
   0B98 00    		NOP
-  0B99 7486  		MOV A, #86h
+  0B99 7406  		MOV A, #6h
   0B9B F0    		MOVX @DPTR, A
   0B9C 00    		NOP
   0B9D 00    		NOP
@@ -2243,12 +2257,12 @@ L0CB8:
   0CEC 00    		NOP
   0CED 00    		NOP
   0CEE 00    		NOP
-  0CEF 7482  		MOV A, #82h
+  0CEF 7402  		MOV A, #2h
   0CF1 F0    		MOVX @DPTR, A
   0CF2 00    		NOP
   0CF3 00    		NOP
   0CF4 00    		NOP
-  0CF5 7486  		MOV A, #86h
+  0CF5 7406  		MOV A, #6h
   0CF7 F0    		MOVX @DPTR, A
   0CF8 00    		NOP
   0CF9 00    		NOP
@@ -2511,7 +2525,7 @@ L0E05:
   0E21 01    		DB 001h 
   0E22 00    		DB 000h 
   0E23 80    		DB 080h 
-  0E24 FA    		DB 0FAh 
+  0E24 32    		DB 032h ; '2'
   0E25 09    		DB 009h 
   0E26 04    		DB 004h 
   0E27 00    		DB 000h 
@@ -2543,7 +2557,7 @@ L0E05:
   0E41 01    		DB 001h 
   0E42 00    		DB 000h 
   0E43 80    		DB 080h 
-  0E44 FA    		DB 0FAh 
+  0E44 32    		DB 032h ; '2'
   0E45 09    		DB 009h 
   0E46 04    		DB 004h 
   0E47 00    		DB 000h 
@@ -3432,4 +3446,8 @@ L1321:
 L1322:
   1322 32    		RETI
 
+CSEG AT 7F92h
+  7F92 01    		DB 001h 
+CSEG AT E600h
+  E600 01    		DB 001h 
 END

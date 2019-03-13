@@ -7,7 +7,7 @@
 # The hex values are code sections that are reached
 # only by indirect jumps, e.g. LJMP @A+DPTR.
 
-NAME=mod_fw_01
+NAME=stock_fw
 HEX=$NAME.ihex
 A51=$NAME.a51
 LST=$NAME.lst
