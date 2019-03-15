@@ -1,0 +1,69 @@
+--- hantek-6022be/fw.c	2018-01-26 19:33:33.000000000 +0100
++++ hantek-6022bl/fw.c	2018-01-26 19:33:33.000000000 +0100
+@@ -24,13 +24,13 @@
+ #include <delay.h>
+ #include <setupdat.h>
+ 
+-#define SET_ANALOG_MODE()
++#define SET_ANALOG_MODE() do { PA7 = 1; } while (0)
+ 
+ #define SET_COUPLING(x)
+ 
+ #define SET_CALIBRATION_PULSE(x)
+ 
+-#define TOGGLE_CALIBRATION_PIN() do { PA7 = !PA7; } while (0)
++#define TOGGLE_CALIBRATION_PIN() do { PC2 = !PC2; } while (0)
+ 
+ #define LED_CLEAR() do { PC0 = 1; PC1 = 1; } while (0)
+ #define LED_GREEN() do { PC0 = 1; PC1 = 0; } while (0)
+@@ -39,7 +39,7 @@
+ #define TIMER2_VAL 500
+ 
+ /* CTLx pin index (IFCLK, ADC clock input). */
+-#define CTL_BIT 2
++#define CTL_BIT 0
+ 
+ #define OUT0 ((1 << CTL_BIT) << 4) /* OEx = 1, CTLx = 0 */
+ 
+@@ -60,8 +60,8 @@
+ 
+ /*
+  * This sets three bits for each channel, one channel at a time.
+- * For channel 0 we want to set bits 5, 6 & 7
+- * For channel 1 we want to set bits 2, 3 & 4
++ * For channel 0 we want to set bits 1, 2 & 3
++ * For channel 1 we want to set bits 4, 5 & 6
+  *
+  * We convert the input values that are strange due to original
+  * firmware code into the value of the three bits as follows:
+@@ -85,23 +85,24 @@
+ 
+ 	switch (val) {
+ 	case 1:
+-		bits = 0x24 * 2;
++		bits = 0x02;
+ 		break;
+ 	case 2:
+-		bits = 0x24 * 1;
++		bits = 0x01;
+ 		break;
+ 	case 5:
+-		bits = 0x24 * 0;
++		bits = 0x00;
+ 		break;
+ 	case 10:
+-		bits = 0x24 * 3;
++		bits = 0x03;
+ 		break;
+ 	default:
+ 		return FALSE;
+ 	}
+ 
+-	mask = (channel) ? 0xe0 : 0x1c;
+-	IOC = (IOC & ~mask) | (bits & mask);
++	bits = bits << (channel ? 1 : 4);
++	mask = (channel) ? 0x70 : 0x0e;
++	IOA = (IOA & ~mask) | (bits & mask);
+ 
+ 	return TRUE;
+ }
