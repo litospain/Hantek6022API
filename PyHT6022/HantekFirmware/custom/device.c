@@ -19,7 +19,13 @@
  **/
 
 #include <fx2macros.h>
+#include <setupdat.h>
+#include <i2c.h>
+#include <eputils.h>
 #include <delay.h>
+#include "hw6022be.inc"
+
+#define SYNCDELAY SYNCDELAY7
 
 #ifdef DEBUG_FIRMWARE
 #include <stdio.h>
@@ -88,12 +94,12 @@ void set_aadj() {
 BOOL set_numchannels(BYTE n)
 {
     if (n == 1 || n == 2) {
-	BYTE fifocfg = 0x08 + (n - 1);  //AUTO_IN, WORD=numchannels-1
-	EP2FIFOCFG = fifocfg;
-	EP6FIFOCFG = fifocfg;
-	numchannels = n;
-	set_aadj();
-	return TRUE;
+        BYTE fifocfg = 0x08 + (n - 1);  //AUTO_IN, WORD=numchannels-1
+        EP2FIFOCFG = fifocfg;
+        EP6FIFOCFG = fifocfg;
+        numchannels = n;
+        set_aadj();
+        return TRUE;
     }
     return FALSE;
 }
@@ -104,7 +110,7 @@ void clear_fifo()
     GPIFABORT = 0xff;
     SYNCDELAY3;
     while (!(GPIFTRIG & 0x80)) {
-	;
+        ;
     }
     // see section 9.3.13 in EZ-USB trm
     FIFORESET = 0x80;
@@ -129,9 +135,9 @@ void stop_sampling()
     GPIFABORT = 0xff;
     SYNCDELAY3;
     if (altiface == 0) {
-	INPKTEND = 6;
+        INPKTEND = 6;
     } else {
-	INPKTEND = 2;
+        INPKTEND = 2;
     }
 }
 
@@ -144,15 +150,15 @@ void start_sampling()
     SYNCDELAY3;
     GPIFTCB0 = 0;
     if (altiface == 0)
-	GPIFTRIG = 6;
+        GPIFTRIG = 6;
     else
-	GPIFTRIG = 4;
+        GPIFTRIG = 4;
 
     // set green led
     // don't clear led
-    ledcounter = 0;
-    PC0 = 1;
-    PC1 = 0;
+    ledcounter = 1000;
+    LED_RED = LED_OFF;
+    LED_GREEN = LED_ON;
 }
 
 extern __code BYTE highspd_dscr;
@@ -160,28 +166,31 @@ extern __code BYTE fullspd_dscr;
 void select_interface(BYTE alt)
 {
     const BYTE *pPacketSize = (USBCS & bmHSM ? &highspd_dscr : &fullspd_dscr)
-	+ (9 + 16*alt + 9 + 4);
+        + (9 + 16*alt + 9 + 4);
     altiface = alt;
     if (alt == 0) {
-	// bulk on port 6
-	EP2CFG = 0x00;
-	EP6CFG = 0xe0;
-	EP6GPIFFLGSEL = 1;
+        // bulk on port 6
+        EP2CFG = 0x00;
+        EP6CFG = 0xe0;
+        EP6GPIFFLGSEL = 1;
 
-	EP6AUTOINLENL = pPacketSize[0];
-	EP6AUTOINLENH = pPacketSize[1];
+        EP6AUTOINLENL = pPacketSize[0];
+        EP6AUTOINLENH = pPacketSize[1];
     } else {
-	// iso on port 2
-	EP2CFG = 0xd8;
-	EP6CFG = 0x00;
-	EP2GPIFFLGSEL = 1;
+        // iso on port 2
+        EP2CFG = 0xd8;
+        EP6CFG = 0x00;
+        EP2GPIFFLGSEL = 1;
 
-	EP2AUTOINLENL = pPacketSize[0];
-	EP2AUTOINLENH = pPacketSize[1] & 0x7;
-	EP2ISOINPKTS = (pPacketSize[1] >> 3) + 1;
-	set_aadj();
+        EP2AUTOINLENL = pPacketSize[0];
+        EP2AUTOINLENH = pPacketSize[1] & 0x7;
+        EP2ISOINPKTS = (pPacketSize[1] >> 3) + 1;
+        set_aadj();
     }
 }
+
+#define OUT0 0x40
+#define OUT1 0x44
 
 const struct samplerate_info {
     BYTE rateid;
@@ -195,25 +204,25 @@ const struct samplerate_info {
 } samplerates[] = {
     { 48, 48000, 0x80,   0, 3, 0, 0x00, 0xea },
     { 30, 30000, 0x80,   0, 3, 0, 0x00, 0xaa },
-    { 24, 24000,    1,   0, 2, 1, 0x40, 0xca },
-    { 16, 16000,    1,   1, 2, 0, 0x40, 0xca },
-    { 12, 12000,    2,   1, 2, 0, 0x40, 0xca },
-    {  8,  8000,    3,   2, 2, 0, 0x40, 0xca },
-    {  4,  4000,    6,   5, 2, 0, 0x40, 0xca },
-    {  2,  2000,   12,  11, 2, 0, 0x40, 0xca },
-    {  1,  1000,   24,  23, 2, 0, 0x40, 0xca },
-    { 50,   500,   48,  47, 2, 0, 0x40, 0xca },
-    { 20,   200,  120, 119, 2, 0, 0x40, 0xca },
-    { 10,   100,  240, 239, 2, 0, 0x40, 0xca }
+    { 24, 24000,    1,   0, 2, 1, OUT0, 0xca },
+    { 16, 16000,    1,   1, 2, 0, OUT0, 0xca },
+    { 12, 12000,    2,   1, 2, 0, OUT0, 0xca },
+    {  8,  8000,    3,   2, 2, 0, OUT0, 0xca },
+    {  4,  4000,    6,   5, 2, 0, OUT0, 0xca },
+    {  2,  2000,   12,  11, 2, 0, OUT0, 0xca },
+    {  1,  1000,   24,  23, 2, 0, OUT0, 0xca },
+    { 50,   500,   48,  47, 2, 0, OUT0, 0xca },
+    { 20,   200,  120, 119, 2, 0, OUT0, 0xca },
+    { 10,   100,  240, 239, 2, 0, OUT0, 0xca }
 };
 
 BOOL set_samplerate(BYTE rateid)
 {
     BYTE i = 0;
     while (samplerates[i].rateid != rateid) {
-	i++;
-	if (i == sizeof(samplerates)/sizeof(samplerates[0]))
-	    return FALSE;
+        i++;
+        if (i == sizeof(samplerates)/sizeof(samplerates[0]))
+            return FALSE;
     }
     samplerate = samplerates[i].rateksps;
     set_aadj();
@@ -256,8 +265,8 @@ BOOL set_samplerate(BYTE rateid)
     EXTAUTODAT2 = 0;
 
     EXTAUTODAT2 = samplerates[i].out0;
-    EXTAUTODAT2 = 0x44;
-    EXTAUTODAT2 = 0x44;
+    EXTAUTODAT2 = OUT1;
+    EXTAUTODAT2 = OUT1;
     EXTAUTODAT2 = 0x00;
     EXTAUTODAT2 = 0x00;
     EXTAUTODAT2 = 0x00;
@@ -274,7 +283,7 @@ BOOL set_samplerate(BYTE rateid)
     EXTAUTODAT2 = 0;
 
     for (i = 0; i < 96; i++)
-	EXTAUTODAT2 = 0;
+        EXTAUTODAT2 = 0;
     return TRUE;
 }
 
@@ -296,7 +305,7 @@ BOOL handle_get_interface(BYTE ifc, BYTE* alt_ifc) {
 BOOL handle_set_interface(BYTE ifc,BYTE alt_ifc) {  
     printf ( "Set Interface.\n" );
     if (ifc == 0) {
-      select_interface(alt_ifc);
+        select_interface(alt_ifc);
     }
     return TRUE;
 }
@@ -312,45 +321,92 @@ BOOL handle_set_configuration(BYTE cfg) {
     return TRUE;
 }
 
+// handle getting and setting EEPROM data
+BOOL eeprom() {
+    WORD addr=SETUP_VALUE(), len=SETUP_LENGTH();
+    // wait for ep0 not busy
+    while ( EP0CS & bmEPBUSY )
+        ;
+    switch ( SETUP_TYPE ) {
+        case 0xc0:
+            while ( len ) { // still have bytes to read
+                BYTE cur_read = len > 64 ? 64 : len; // can't read more than 64 bytes at a time
+                while ( EP0CS&bmEPBUSY ) // can't do this until EP0 is ready
+                    ;
+                eeprom_read( 0x51, addr, cur_read, EP0BUF );
+                EP0BCH=0;
+                SYNCDELAY;
+                EP0BCL=cur_read;
+                len -= cur_read;
+                addr += cur_read;
+            }
+            break;
+        case 0x40:
+            while ( len ) {
+                BYTE cur_write, c;
+                // printf ( "Len More Bytes %d\n" , len );
+                EP0BCL = 0; // allow pc transfer in
+                while ( EP0CS & bmEPBUSY ) // wait
+                    ;
+                cur_write = EP0BCL;
+                // printf ( "Writing %d Bytes to %d..\n", cur_write, addr );
+                if ( !eeprom_write( 0x51, addr, cur_write, EP0BUF ) )
+                    return FALSE;
+                addr += cur_write;
+                len -= cur_write;
+            }
+            break;
+        default:
+            return FALSE; // bad type
+    }
+    return TRUE;
+}
 
 //******************* VENDOR COMMAND HANDLERS **************************
 
 BOOL handle_vendorcommand(BYTE cmd) {
     stop_sampling();
     // Set Red LED
-    PC0 = 0;
-    PC1 = 1;
-    ledcounter = 1000;
+    LED_RED = LED_ON;
+    LED_GREEN = LED_OFF;
+    ledcounter = 1000; // monoflop
     switch (cmd) {
+    case 0xa2:
+        return eeprom();
     case 0xe0:
     case 0xe1:
-	EP0BCH=0;
-	EP0BCL=0;
-	while (EP0CS & bmEPBUSY);
-	set_voltage(cmd - 0xe0, EP0BUF[0]);
-	return TRUE;
+        EP0BCH=0;
+        EP0BCL=0;
+        while (EP0CS & bmEPBUSY)
+            ;
+        set_voltage(cmd - 0xe0, EP0BUF[0]);
+        return TRUE;
     case 0xe2:
-	EP0BCH=0;
-	EP0BCL=0;
-	while (EP0CS & bmEPBUSY);
-	set_samplerate(EP0BUF[0]);
-	return TRUE;
+        EP0BCH=0;
+        EP0BCL=0;
+        while (EP0CS & bmEPBUSY)
+            ;
+        set_samplerate(EP0BUF[0]);
+        return TRUE;
     case 0xe3:
-	EP0BCH=0;
-	EP0BCL=0;
-	while (EP0CS & bmEPBUSY);
-	if (EP0BUF[0] == 1)
-	    start_sampling();
-	return TRUE;
+        EP0BCH=0;
+        EP0BCL=0;
+        while (EP0CS & bmEPBUSY)
+            ;
+        if (EP0BUF[0] == 1)
+            start_sampling();
+        return TRUE;
     case 0xe4:
-	EP0BCH=0;
-	EP0BCL=0;
-	while (EP0CS & bmEPBUSY);
-	set_numchannels(EP0BUF[0]);
-	return TRUE;
+        EP0BCH=0;
+        EP0BCL=0;
+        while (EP0CS & bmEPBUSY)
+            ;
+        set_numchannels(EP0BUF[0]);
+        return TRUE;
     }
     return FALSE; // not handled by handlers
 }
+
 
 //********************  INIT ***********************
 
@@ -377,5 +433,4 @@ void main_init() {
 
 void main_loop() {
 }
-
 

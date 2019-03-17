@@ -22,6 +22,7 @@
 #include <autovector.h>
 #include <delay.h>
 #include <setupdat.h>
+#include "hw6022be.inc"
 
 #ifdef DEBUG_FIRMWARE 
 #include <serial.h>
@@ -32,32 +33,32 @@
 
 volatile WORD ledcounter = 0;
 
-
 volatile __bit dosud=FALSE;
 volatile __bit dosuspend=FALSE;
+
 
 // custom functions
 extern void main_loop();
 extern void main_init();
 
+
 void main() {
+    SETCPUFREQ(CLK_12M);
 
- SETCPUFREQ(CLK_12M); // save energy
+    main_init();
 
- main_init();
+    // set up interrupts.
+    USE_USB_INTS();
 
- // set up interrupts.
- USE_USB_INTS();
- 
- ENABLE_SUDAV();
- ENABLE_USBRESET();
- ENABLE_HISPEED(); 
- ENABLE_SUSPEND();
- ENABLE_RESUME();
+    ENABLE_SUDAV();
+    ENABLE_USBRESET();
+    ENABLE_HISPEED(); 
+    ENABLE_SUSPEND();
+    ENABLE_RESUME();
 
- EA=1;
+    EA=1;
 
- // init timer2
+    // init timer2
     RCAP2L = -500 & 0xff;
     RCAP2H = (((WORD)-500) >> 8) & 0xff;
     T2CON = 0;
@@ -67,9 +68,9 @@ void main() {
 // iic files (c2 load) don't need to renumerate/delay
 // trm 3.6
 #ifndef NORENUM
- RENUMERATE();
+    RENUMERATE();
 #else
- USBCS &= ~bmDISCON;
+    USBCS &= ~bmDISCON;
 #endif
  
     PORTCCFG = 0;
@@ -77,79 +78,84 @@ void main() {
     OEC = 0xff;
     OEA = 0x80;
 
- while(TRUE) {
+    while(TRUE) {
 
-     main_loop();
+        main_loop();
 
-     if (dosud) {
-       dosud=FALSE;
-       handle_setupdata();
-     }
-
-     if (dosuspend) {
-        dosuspend=FALSE;
-        do {
-           printf ( "I'm going to Suspend.\n" );
-           WAKEUPCS |= bmWU|bmWU2; // make sure ext wakeups are cleared
-           SUSPEND=1;
-           PCON |= 1;
-           __asm
-           nop
-           nop
-           nop
-           nop
-           nop
-           nop
-           nop
-           __endasm;
-        } while ( !remote_wakeup_allowed && REMOTE_WAKEUP()); 
-        printf ( "I'm going to wake up.\n");
-
-        // resume
-        // trm 6.4
-        if ( REMOTE_WAKEUP() ) {
-            delay(5);
-            USBCS |= bmSIGRESUME;
-            delay(15);
-            USBCS &= ~bmSIGRESUME;
+        if (dosud) {
+            dosud=FALSE;
+            handle_setupdata();
         }
 
-     }
+        if (dosuspend) {
+            dosuspend=FALSE;
+            do {
+                printf ( "I'm going to Suspend.\n" );
+                WAKEUPCS |= bmWU|bmWU2; // make sure ext wakeups are cleared
+                SUSPEND=1;
+                PCON |= 1;
+                __asm
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                __endasm;
+            } while ( !remote_wakeup_allowed && REMOTE_WAKEUP() );
+            printf ( "I'm going to wake up.\n");
 
- } // end while
-
+            // resume
+            // trm 6.4
+            if ( REMOTE_WAKEUP() ) {
+                delay(5);
+                USBCS |= bmSIGRESUME;
+                delay(15);
+                USBCS &= ~bmSIGRESUME;
+            }
+        }
+    } // end while
 } // end main
 
+
 void resume_isr() __interrupt RESUME_ISR {
- CLEAR_RESUME();
+    CLEAR_RESUME();
 }
-  
+
+
 void sudav_isr() __interrupt SUDAV_ISR {
- dosud=TRUE;
- CLEAR_SUDAV();
+    dosud=TRUE;
+    CLEAR_SUDAV();
 }
+
+
 void usbreset_isr() __interrupt USBRESET_ISR {
- handle_hispeed(FALSE);
- CLEAR_USBRESET();
+    handle_hispeed(FALSE);
+    CLEAR_USBRESET();
 }
+
+
 void hispeed_isr() __interrupt HISPEED_ISR {
- handle_hispeed(TRUE);
- CLEAR_HISPEED();
+    handle_hispeed(TRUE);
+    CLEAR_HISPEED();
 }
+
 
 void suspend_isr() __interrupt SUSPEND_ISR {
- dosuspend=TRUE;
- CLEAR_SUSPEND();
+    dosuspend=TRUE;
+    CLEAR_SUSPEND();
 }
 
+
 void timer2_isr() __interrupt TF2_ISR {
-  PA7 = !PA7;
-  if (ledcounter) {
-    if (--ledcounter == 0) {
-      // clear LED
-      PC0 = 1;
-      PC1 = 1;
+    CAL_OUT = !CAL_OUT;
+    if (ledcounter) {
+        if (--ledcounter == 0) {
+            // clear LED
+            LED_RED = LED_OFF;
+            LED_GREEN = LED_OFF;
+        }
     }
-  }
-  TF2 = 0;
+    TF2 = 0;
 }
