@@ -37,7 +37,7 @@ voltage_data = []
 
 for i in range( data_points ):
     timing_data.append( i )
-    voltage_data.append( ( i-data_points/2 ) / 100 + math.sin(i) )
+    voltage_data.append( i/10 + math.sin(i) )
 
 
 if len(timing_data) != len(voltage_data):

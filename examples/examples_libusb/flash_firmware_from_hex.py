@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-# flash the default firmware -> PyHT6022.HantekFirmware.custom_firmware
-# does not (yet) work wth OpenHantek project
+
+# flash the firmware from hex file
 
 __author__ = 'Robert Cope'
 
@@ -9,14 +9,10 @@ from sys import argv
 
 if len( argv ) > 1:
 	firmware = argv[ 1 ]
-
 	scope = Oscilloscope()
 	scope.setup()
 	scope.open_handle()
-
 	scope.flash_firmware_from_hex( firmware )
-
 	scope.close_handle()
-
 else:
-	print( "usage: " + argv[0] + " hexfile" )
+	print( "usage: " + argv[0] + " path_to_hexfile" )

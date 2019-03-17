@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 __author__ = 'rcope'
 
 from PyHT6022.LibUsbScope import Oscilloscope
