@@ -36,6 +36,7 @@
 // change to support as many interfaces as you need
 BYTE altiface = 0; // alt interface
 extern volatile WORD ledcounter;
+extern volatile __bit GREEN;
 WORD samplerate;
 BYTE numchannels;
 
@@ -159,6 +160,7 @@ void start_sampling()
     ledcounter = 1000;
     LED_RED = LED_OFF;
     LED_GREEN = LED_ON;
+    GREEN = TRUE;
 }
 
 extern __code BYTE highspd_dscr;
@@ -343,7 +345,7 @@ BOOL eeprom() {
             break;
         case 0x40:
             while ( len ) {
-                BYTE cur_write, c;
+                BYTE cur_write;
                 // printf ( "Len More Bytes %d\n" , len );
                 EP0BCL = 0; // allow pc transfer in
                 while ( EP0CS & bmEPBUSY ) // wait
@@ -369,6 +371,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
     // Set Red LED
     LED_RED = LED_ON;
     LED_GREEN = LED_OFF;
+    GREEN = FALSE;
     ledcounter = 1000; // monoflop
     switch (cmd) {
     case 0xa2:

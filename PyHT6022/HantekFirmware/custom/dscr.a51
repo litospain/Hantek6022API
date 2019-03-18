@@ -43,10 +43,11 @@ ENDPOINT_TYPE_BULK=2
 ENDPOINT_TYPE_INT=3
 
     .globl	_dev_dscr, _dev_qual_dscr, _highspd_dscr, _fullspd_dscr, _dev_strings, _dev_strings_end
-    .globl	_bulk_packet, _iso_packet
+
 ; These need to be in code memory.  If
 ; they aren't you'll have to manully copy them somewhere
 ; in code memory otherwise SUDPTRH:L don't work right
+
     .area	DSCR_AREA	(CODE)
 
 _dev_dscr:
@@ -97,27 +98,17 @@ highspd_dscr_end:
 	.db	DSCR_INTERFACE_TYPE
 	.db	0				; index
 	.db	0				; alt setting idx
-	.db	2				; n endpoints	
+	.db	1				; n endpoints
 	.db	0xff				; class
 	.db	0
 	.db	0
 	.db	0				; string index
-
-; endpoint 2 out
-	.db	DSCR_ENDPOINT_LEN
-	.db	DSCR_ENDPOINT_TYPE
-	.db	0x02				; ep2 dir=out and address
-	.db	ENDPOINT_TYPE_BULK		; type
-	.db	0x00				; max packet LSB
-	.db	0x02				; max packet size=512 bytes
-	.db	0x00				; polling interval
 
 ; endpoint 6 in 
 	.db	DSCR_ENDPOINT_LEN
 	.db	DSCR_ENDPOINT_TYPE
 	.db	0x86				; ep1 dir=in and address
 	.db	ENDPOINT_TYPE_BULK		; type
-_bulk_packet:
 	.db	0x00				; max packet LSB
 	.db	0x02				; max packet size=512 bytes
 	.db	0x00				; polling interval
@@ -138,7 +129,6 @@ _bulk_packet:
 	.db	DSCR_ENDPOINT_TYPE
 	.db	0x82				; ep1 dir=in and address
 	.db	ENDPOINT_TYPE_ISO		; type
-_iso_packet:
 	.db	0x00				; max packet LSB
 	.db	0x14				; max packet size=3*1024 bytes
 	.db	0x01				; polling interval

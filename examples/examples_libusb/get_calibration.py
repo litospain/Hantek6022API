@@ -10,4 +10,6 @@ scope.open_handle()
 calibration = scope.get_calibration_values()
 scope.close_handle()
 
-print( calibration )
+# print( calibration )
+for x in calibration:
+    print( x, end=" " )

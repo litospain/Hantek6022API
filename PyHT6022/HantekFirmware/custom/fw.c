@@ -31,7 +31,8 @@
 #define printf(...)
 #endif
 
-volatile WORD ledcounter = 0;
+volatile WORD ledcounter = 1000;
+volatile __bit GREEN = FALSE;
 
 volatile __bit dosud=FALSE;
 volatile __bit dosuspend=FALSE;
@@ -77,6 +78,10 @@ void main() {
     PORTACFG = 0;
     OEC = 0xff;
     OEA = 0x80;
+
+    LED_RED = LED_ON;
+    LED_GREEN = LED_OFF;
+    GREEN = FALSE;
 
     while(TRUE) {
 
@@ -150,12 +155,17 @@ void suspend_isr() __interrupt SUSPEND_ISR {
 
 void timer2_isr() __interrupt TF2_ISR {
     CAL_OUT = !CAL_OUT;
-    if (ledcounter) {
-        if (--ledcounter == 0) {
-            // clear LED
+    if (--ledcounter == 0) {
+        ledcounter = 1000;
+        if ( GREEN ) {
+            // toggle green LED, switch red off
+            LED_GREEN = !LED_GREEN;
             LED_RED = LED_OFF;
+        } else {
+            LED_RED = !LED_RED;
             LED_GREEN = LED_OFF;
         }
+        GREEN = FALSE;
     }
     TF2 = 0;
 }
