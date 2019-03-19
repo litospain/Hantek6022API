@@ -1,0 +1,1 @@
+/home/horo/projects/Measure/Hantek6022API/Hantek6022API/PyHT6022/HantekFirmware/custom_BE/device.c

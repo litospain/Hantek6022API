@@ -1,7 +1,10 @@
-all: fw_custom
+all: fw_custom_BE fw_custom_BL
 
-fw_custom:
-	cd PyHT6022/HantekFirmware/custom && make
+fw_custom_BE:
+	cd PyHT6022/HantekFirmware/custom_BE && make
+
+fw_custom_BL:
+	cd PyHT6022/HantekFirmware/custom_BL && make
 
 install:
 	python3 setup.py install
