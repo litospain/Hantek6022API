@@ -22,7 +22,7 @@
 #include <autovector.h>
 #include <delay.h>
 #include <setupdat.h>
-#include "hw6022be.inc"
+#include "hw6022.inc"
 
 #ifdef DEBUG_FIRMWARE 
 #include <serial.h>
