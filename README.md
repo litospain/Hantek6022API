@@ -2,7 +2,9 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/Ho-Ro/Hantek6022API?branch=master&svg=true)](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) [![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
 
-This repo is a fork of [github.com/jhoenicke/Hantek6022API](https://github.com/jhoenicke/Hantek6022API) 
+This repo is a fork of [github.com/jhoenicke/Hantek6022API](https://github.com/jhoenicke/Hantek6022API) and focusses mainly on Hantek6022BE under Linux (development system: debian buster).
+
+__Hantek6022BL firmware is currently under development - DO NOT USE!__
 
 <img alt="Scope Visualisation Example" width="100%" src="docs/images/HT6022BEBuiltInOscillator.png">
 
@@ -32,7 +34,7 @@ If you have you have your own examples or have seen this library used, please le
 
 ## Now with Linux support
 
-If you're on Linux, you're also in luck, as I've provided some reverse engineered binding for libusb to operate this 
+If you're on Linux, you're also in luck. Provided are some reverse engineered binding for libusb to operate this 
 little device. You may wish to first add 60-hantek-6022-usb.rules to your udev rules, via
 
     sudo cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
@@ -40,26 +42,35 @@ little device. You may wish to first add 60-hantek-6022-usb.rules to your udev r
 After you've done this, the scope should automatically come up with the correct permissions to be accessed without a
 root user.
 
-You need to compile the custom firmware.  Install `sdcc` for this.  Then run `make` in the directory `HantekFirmware/custom`:
+The following instructions are tested with Debian (Stretch and Buster) and are executed also automatically under Ubuntu (1804) - have a look at the [appveyor build status](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) and the [related config file](https://github.com/Ho-Ro/Hantek6022API/blob/master/appveyor.yml).
+
+To compile the custom firmware you have to install (as root) the _small devices c compiler_ sdcc:
+
+    sudo apt install sdcc
+
+The firmware uses the submodule [fx2lib](https://github.com/djmuhlestein/fx2lib/tree/4d3336c3b5ebc2127a8e3c013ea13ad58873e9e0), pull it in:
 
     git submodule update --init
-    sudo apt-get install sdcc
-    cd PyHT6022/HantekFirmware/custom
+
+To build the custom firmware run `make` in the top level directory:
+
     make
 
-Install the python modules and the firmware (e.g. into /usr/local/lib/python3.5/dist-packages/Python-Hantek...).
+To build and install the python package you have to install some more .deb packages:
+
+    sudo apt install python3-setuptools python3-libusb1
+
+Build and install the python modules and the firmware (e.g. into /usr/local/lib/python3.5/dist-packages/Python-Hantek...).
 
     sudo python3 setup.py install
 
-The provided Makefile simplifies the steps above a little bit
-
-Build the firmware:
-
-    make fw_custom
-
-Install modules and firmware:
+Or use the Makefile:
 
     sudo make install
+
+To build a debian package you need two more packages:
+
+    (sudo) apt install checkinstall fakeroot
 
 Create a debian package:
 
@@ -69,13 +80,13 @@ that can be installed with
 
     sudo dpkg -i dist/hantek6022api_...
 
-With the device plugged in, run the example_linux_flashfirmware.py example,
+With the device plugged in, run the flashfirmware.py example,
 
-    python examples/example_linux_flashfirmware.py
+    python examples/examples_libusb/flash_firmware_custom.py
 
 to bootstrap the scope for use. You can then write your own programs, or look at the current channel 1 scope trace via
 
-    python examples/example_linux_scopevis.py
+    python examples/examples_libusb/scopevis.py
 
 
 ## TODO
@@ -83,6 +94,7 @@ to bootstrap the scope for use. You can then write your own programs, or look at
  1. Clean up library, apply good formatting.
  2. Clean up unit tests.
  3. Add more examples.
+ 4. Create 6022BL firmware (difficult due to missing hw info and missing device).
 
 One excellent ultimate goal for this would to make it play nice with cheap ARM SBCs like the Raspberry Pi, such that
 this could be used as a quick and dirty DAQ for many interesting systems.
