@@ -4,7 +4,9 @@
 
 This repo is a fork of [github.com/jhoenicke/Hantek6022API](https://github.com/jhoenicke/Hantek6022API) and focusses mainly on Hantek6022BE under Linux (development system: debian buster).
 
-__Hantek6022BL firmware is currently under development - DO NOT USE!__
+__Hantek6022BE custom firmware is now feature complete and usable for https://github.com/Ho-Ro/openhantek__
+
+__Hantek6022BL custom firmware is currently under development - DO NOT USE!__
 
 <img alt="Scope Visualisation Example" width="100%" src="docs/images/HT6022BEBuiltInOscillator.png">
 
@@ -41,7 +43,7 @@ little device. You may wish to first add 60-hantek-6022-usb.rules to your udev r
 
 After you've done this, the scope should automatically come up with the correct permissions to be accessed without a
 root user.
-
+    
 The following instructions are tested with Debian (Stretch and Buster) and are executed also automatically under Ubuntu (1804) - have a look at the [appveyor build status](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) and the [related config file](https://github.com/Ho-Ro/Hantek6022API/blob/master/appveyor.yml).
 
 To compile the custom firmware you have to install (as root) the _small devices c compiler_ sdcc:
