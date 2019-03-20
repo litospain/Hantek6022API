@@ -24,7 +24,7 @@
 #include <eputils.h>
 #include <delay.h>
 
-#define SYNCDELAY SYNCDELAY7
+#define SYNCDELAY SYNCDELAY3
 
 #ifdef DEBUG_FIRMWARE
 #include <stdio.h>
@@ -33,7 +33,6 @@
 #endif
 
 #include "hw6022.inc"
-#include "set_voltage.inc"
 
 
 // change to support as many interfaces as you need
@@ -43,6 +42,43 @@ extern volatile __bit GREEN;
 WORD samplerate;
 BYTE numchannels;
 
+
+/* We convert the input values that are strange due to original firmware code into the value of the three bits as follows:
+ * val -> bits
+ *  1  -> 010b
+ *  2  -> 001b
+ *  5  -> 000b
+ * 10  -> 011b
+ *
+ * The third bit is always zero since there are only four outputs connected in the serial selector chip.
+ *
+ * The multiplication of the converted value by MUX_BITS sets the relevant bits in
+ * both channels and then we mask it out to only affect the channel currently
+ * requested.
+ */
+BOOL set_voltage(BYTE channel, BYTE val)
+{
+    BYTE bits, mask;
+    switch (val) {
+    case 1:
+        bits = MUX_BITS * 2;
+        break;
+    case 2:
+        bits = MUX_BITS * 1;
+        break;
+    case 5:
+        bits = MUX_BITS * 0;
+        break;
+    case 10:
+        bits = MUX_BITS * 3;
+        break;
+    default:
+        return FALSE;
+    }
+    mask = channel ? MASK_CH1 : MASK_CH0;
+    MUX_PORT = (MUX_PORT & ~mask) | (bits & mask);
+    return TRUE;
+}
 
 void set_aadj() {
 	if (samplerate >= 24000 / numchannels) {
@@ -54,7 +90,8 @@ void set_aadj() {
 }
 
 BOOL set_numchannels(BYTE n)
-{
+{   // n = 1:  8 bit / sample, only CH0
+	  // n = 2: 16 bit / sample, CH0 & CH1
     if (n == 1 || n == 2) {
         BYTE fifocfg = 0x08 + (n - 1);  //AUTO_IN, WORD=numchannels-1
         EP2FIFOCFG = fifocfg;
@@ -70,32 +107,32 @@ void clear_fifo()
 {
     BYTE fifocfg = 0x08 + (numchannels - 1);  //AUTO_IN, WORD=numchannels-1
     GPIFABORT = 0xff;
-    SYNCDELAY3;
+    SYNCDELAY;
     while (!(GPIFTRIG & 0x80)) {
         ;
     }
     // see section 9.3.13 in EZ-USB trm
     FIFORESET = 0x80;
-    SYNCDELAY3;
+    SYNCDELAY;
     EP2FIFOCFG = 0;
-    SYNCDELAY3;
+    SYNCDELAY;
     EP6FIFOCFG = 0;
-    SYNCDELAY3;
+    SYNCDELAY;
     FIFORESET = 0x02;
-    SYNCDELAY3;
+    SYNCDELAY;
     FIFORESET = 0x06;
-    SYNCDELAY3;
+    SYNCDELAY;
     EP2FIFOCFG = fifocfg;
-    SYNCDELAY3;
+    SYNCDELAY;
     EP6FIFOCFG = fifocfg;
-    SYNCDELAY3;
+    SYNCDELAY;
     FIFORESET = 0;
 }
 
 void stop_sampling()
 {
     GPIFABORT = 0xff;
-    SYNCDELAY3;
+    SYNCDELAY;
     if (altiface == 0) {
         INPKTEND = 6;
     } else {
@@ -108,9 +145,9 @@ void start_sampling()
     SET_ANALOG_MODE();
     clear_fifo();
 
-    SYNCDELAY3;
+    SYNCDELAY;
     GPIFTCB1 = 0x28;
-    SYNCDELAY3;
+    SYNCDELAY;
     GPIFTCB0 = 0;
     if (altiface == 0)
         GPIFTRIG = 6;
@@ -196,16 +233,16 @@ BOOL set_samplerate(BYTE rateid)
     AUTOPTRL2 = 0x00;
 
     /* The program for low-speed, e.g. 1 MHz, is
-     * wait 24, CTL2=0, FIFO
-     * wait 23, CTL2=1
-     * jump 0, CTL2=1
+     * wait 24, CTLx=0, FIFO
+     * wait 23, CTLx=1
+     * jump 0, CTL2x1
      *
      * The program for 24 MHz is
-     * wait 1, CTL2=0, FIFO
-     * jump 0, CTL2=1
+     * wait 1, CTLx=0, FIFO
+     * jump 0, CTLx=1
      *
      * The program for 30/48 MHz is:
-     * jump 0, CTL2=Z, FIFO, LOOP
+     * jump 0, CTLx=Z, FIFO, LOOP
      */
 
     EXTAUTODAT2 = samplerates[i].wait0;
@@ -227,8 +264,8 @@ BOOL set_samplerate(BYTE rateid)
     EXTAUTODAT2 = 0;
 
     EXTAUTODAT2 = samplerates[i].out0;
-    EXTAUTODAT2 = OUT1;
-    EXTAUTODAT2 = OUT1;
+    EXTAUTODAT2 = OE_CTL;
+    EXTAUTODAT2 = OE_CTL;
     EXTAUTODAT2 = 0x00;
     EXTAUTODAT2 = 0x00;
     EXTAUTODAT2 = 0x00;
@@ -283,14 +320,14 @@ BOOL handle_set_configuration(BYTE cfg) {
     return TRUE;
 }
 
-// handle getting and setting EEPROM data
+// handle reading and writing EEPROM data
 BOOL eeprom() {
     WORD addr=SETUP_VALUE(), len=SETUP_LENGTH();
     // wait for ep0 not busy
     while ( EP0CS & bmEPBUSY )
         ;
     switch ( SETUP_TYPE ) {
-        case 0xc0:
+        case 0xc0: // read access
             while ( len ) { // still have bytes to read
                 BYTE cur_read = len > 64 ? 64 : len; // can't read more than 64 bytes at a time
                 while ( EP0CS&bmEPBUSY ) // can't do this until EP0 is ready
@@ -303,7 +340,7 @@ BOOL eeprom() {
                 addr += cur_read;
             }
             break;
-        case 0x40:
+        case 0x40: // write access
             while ( len ) {
                 BYTE cur_write;
                 // printf ( "Len More Bytes %d\n" , len );

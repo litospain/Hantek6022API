@@ -37,7 +37,6 @@ volatile __bit GREEN = FALSE;
 volatile __bit dosud=FALSE;
 volatile __bit dosuspend=FALSE;
 
-
 // custom functions
 extern void main_loop();
 extern void main_init();
@@ -76,8 +75,8 @@ void main() {
  
     PORTCCFG = 0;
     PORTACFG = 0;
-    OEC = 0xff;
-    OEA = 0x80;
+    OEC = INIT_OEC;
+    OEA = INIT_OEA;
 
     LED_RED = LED_ON;
     LED_GREEN = LED_OFF;
@@ -154,18 +153,23 @@ void suspend_isr() __interrupt SUSPEND_ISR {
 
 
 void timer2_isr() __interrupt TF2_ISR {
-    CAL_OUT = !CAL_OUT;
-    if (--ledcounter == 0) {
-        ledcounter = 1000;
+    // called every 500µs
+    CAL_OUT = !CAL_OUT; // 1 kHz square wave out
+    if (--ledcounter <= 0) { // after 500 ms
+        ledcounter = 1000; // retrigger
         if ( GREEN ) {
-            // toggle green LED, switch red off
+            // blink green LED, switch red off
+            // normally green will be retriggered fast
+            // so it stays green during sampling
             LED_GREEN = !LED_GREEN;
             LED_RED = LED_OFF;
         } else {
+        	  // blink red LED, switch green off
+        	  // shows idle mode
             LED_RED = !LED_RED;
             LED_GREEN = LED_OFF;
         }
-        GREEN = FALSE;
+        GREEN = FALSE; // fall back to red if not triggered fast enough
     }
     TF2 = 0;
 }
