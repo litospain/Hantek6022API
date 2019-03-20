@@ -16,7 +16,7 @@ install:
 	cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
 
 deb:
-	fakeroot checkinstall --requires python3-libusb1 --install=no --backup=no --deldoc=yes
+	fakeroot checkinstall --default --requires python3-libusb1 --install=no --backup=no --deldoc=yes
 
 clean:
 	-rm *~ .*~ 
