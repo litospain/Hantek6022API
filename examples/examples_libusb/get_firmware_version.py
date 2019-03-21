@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 
-__author__ = 'Jochen Hoenicke'
+__author__ = 'Robert Cope'
+"""
+"""
 
 from PyHT6022.LibUsbScope import Oscilloscope
 
 scope = Oscilloscope()
 scope.setup()
 scope.open_handle()
-firmware = scope.read_firmware(length=16*1024, chunk_len=32)
+print( hex( scope.get_fw_version() ) )
 scope.close_handle()
-
-print(firmware)

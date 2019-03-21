@@ -11,14 +11,15 @@ from struct import pack
 
 isPython3 = '3' == sys.version[0]
 
-from PyHT6022.HantekFirmware import default_firmware, fx2_ihex_to_control_packets
+from PyHT6022.HantekFirmware import custom_firmware_BE, custom_firmware_BL, fx2_ihex_to_control_packets
 
 class Oscilloscope(object):
     NO_FIRMWARE_VENDOR_ID = 0x04B4
     FIRMWARE_PRESENT_VENDOR_ID = 0x04B5
-    MODEL_ID = 0x6022
+    MODEL_ID_BE = 0x6022
+    MODEL_ID_BL = 0x602A
 
-    RW_FIRMWARE_REQUEST = 0xa0
+    RW_FIRMWARE_REQUEST = 0xa0	
     RW_FIRMWARE_INDEX = 0x00
 
     RW_EEPROM_REQUEST = 0xa2
@@ -64,6 +65,7 @@ class Oscilloscope(object):
                        5: ('+/- 1V', 0.0078125, 0.5),
                       10: ('+/- 500mV', 0.00390625, 0.25)}
 
+
     def __init__(self, scope_id=0):
         self.device = None
         self.device_handle = None
@@ -75,19 +77,36 @@ class Oscilloscope(object):
         self.num_channels = 2
         self.scope_id = scope_id
 
+
     def setup(self):
         """
         Attempt to find a suitable scope to run.
-        :return: True if a 6022BE scope was found, False otherwise.
+        :return: True if a 6022{BE,BL} scope was found, False otherwise.
         """
-        self.device = (self.context.getByVendorIDAndProductID(
-            self.FIRMWARE_PRESENT_VENDOR_ID, self.MODEL_ID,skip_on_error=True, skip_on_access_error=True) or
+        # 1st look for 6022BE devices
+        self.device = (
             self.context.getByVendorIDAndProductID(
-                self.NO_FIRMWARE_VENDOR_ID, self.MODEL_ID, skip_on_error=True,skip_on_access_error=True))
-        if not self.device:
-            return False
-        self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
-        return True
+                self.FIRMWARE_PRESENT_VENDOR_ID, self.MODEL_ID_BE, skip_on_error=True, skip_on_access_error=True) 
+            or self.context.getByVendorIDAndProductID(
+                self.NO_FIRMWARE_VENDOR_ID, self.MODEL_ID_BE, skip_on_error=True, skip_on_access_error=True) 
+            )
+        if self.device: 
+            self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
+            return True
+
+        # if not found look for 6022BL
+        self.device = (
+            self.context.getByVendorIDAndProductID(
+                self.FIRMWARE_PRESENT_VENDOR_ID, self.MODEL_ID_BL, skip_on_error=True, skip_on_access_error=True) 
+            or self.context.getByVendorIDAndProductID(
+                self.NO_FIRMWARE_VENDOR_ID, self.MODEL_ID_BL, skip_on_error=True, skip_on_access_error=True) 
+            )
+        if self.device: 
+            self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
+            return True
+
+        return False
+
 
     def open_handle(self):
         """
@@ -107,6 +126,7 @@ class Oscilloscope(object):
             self.set_interface(0)
         return True
 
+
     def close_handle(self, release_interface=True):
         """
         Close the current scope device handle. This should always be called at clean-up.
@@ -121,17 +141,30 @@ class Oscilloscope(object):
         self.device_handle = None
         return True
 
+
+    def get_fw_version( self ):
+        """
+        Returns the BCD coded firmware/device version
+        """
+        if self.device:
+            return self.device.getbcdDevice()
+        else:
+            return None
+
+
     def __del__(self):
         self.close_handle()
+
 
     def poll(self):
         self.context.handleEvents()
 
-    def flash_firmware(self, firmware=default_firmware, supports_single_channel=True, timeout=60):
+
+    def flash_firmware(self, firmware=None, supports_single_channel=True, timeout=60):
         """
         Flash scope firmware to the target scope device. This needs to occur once when the device is first attached,
         as the 6022BE does not have any persistant storage.
-        :param firmware: (OPTIONAL) The firmware packets to send. Default: Stock firmware.
+        :param firmware: (OPTIONAL) The firmware packets to send. Default: custom firmware (either BE or BL).
         :param supports_single_channel: (OPTIONAL) Set this to false if loading the stock firmware, as it does not
                                         support reducing the number of active channels.
         :param timeout: (OPTIONAL) A timeout for each packet transfer on the firmware upload. Default: 60 seconds.
@@ -140,6 +173,11 @@ class Oscilloscope(object):
         """
         if not self.device_handle:
             assert self.open_handle()
+        if not firmware: # called without an explicit firmware parameter
+            if self.device.getVendorID() == self.MODEL_ID_BL: # special case of 6022BL
+                firmware = custom_firmware_BL
+            else: # normal case
+                firmware = custom_firmware_BE
         for packet in firmware:
             bytes_written = self.device_handle.controlWrite(0x40, self.RW_FIRMWARE_REQUEST,
                                                             packet.value, self.RW_FIRMWARE_INDEX,
@@ -154,6 +192,7 @@ class Oscilloscope(object):
         self.open_handle()
         return self.is_device_firmware_present
 
+
     def flash_firmware_from_hex(self, hex_file, timeout=60):
         """
         Open an Intel hex file for the 8051 and try to flash it to the scope.
@@ -163,6 +202,7 @@ class Oscilloscope(object):
                  was present for the device. May assert or raise various libusb errors if something went wrong.
         """
         return self.flash_firmware(firmware=fx2_ihex_to_control_packets(hex_file), timeout=timeout)
+
 
     def read_firmware(self, address=0, length=8192, to_ihex=True, chunk_len=16, timeout=60):
         """
@@ -213,6 +253,7 @@ class Oscilloscope(object):
             lines.append(":00000001ff")
             return "\n".join(lines)
 
+
     def get_calibration_values(self, timeout=0):
         """
         Retrieve the current calibration values from the oscilloscope.
@@ -221,6 +262,7 @@ class Oscilloscope(object):
                  May assert or raise various libusb errors if something went wrong.
         """
         return array.array('B', self.read_eeprom(self.CALIBRATION_EEPROM_OFFSET, 32, timeout=timeout))
+
 
     def set_calibration_values(self, cal_list, timeout=0):
         """
@@ -231,6 +273,7 @@ class Oscilloscope(object):
         """
         cal_list = cal_list if isinstance(cal_list, basestring) else array.array('c', cal_list).tostring()
         return self.write_eeprom(self.CALIBRATION_EEPROM_OFFSET, cal_list, timeout=timeout)
+
 
     def read_eeprom(self, offset, length, timeout=0):
         """
@@ -245,6 +288,7 @@ class Oscilloscope(object):
         data = self.device_handle.controlRead(0x40, self.RW_EEPROM_REQUEST, offset,
                                               self.RW_EEPROM_INDEX, length, timeout=timeout)
         return data
+
 
     def write_eeprom(self, offset, data, timeout=0):
         """
@@ -261,6 +305,7 @@ class Oscilloscope(object):
         assert data_len == len(data)
         return True
 
+
     def start_capture(self, timeout=0):
         """
         Tell the device to start capturing samples.
@@ -271,6 +316,7 @@ class Oscilloscope(object):
                                                         self.TRIGGER_VALUE, self.TRIGGER_INDEX,
                                                         b'\x01', timeout=timeout)
         return bytes_written == 1
+
 
     def stop_capture(self, timeout=0):
         """
@@ -283,6 +329,7 @@ class Oscilloscope(object):
                                                         self.TRIGGER_VALUE, self.TRIGGER_INDEX,
                                                         b'\x00', timeout=timeout)
         return bytes_written == 1
+
 
     def read_data(self, data_size=0x400, raw=False, timeout=0):
         """
@@ -314,6 +361,7 @@ class Oscilloscope(object):
             return chdata
         else:
             return array.array('B', chdata[0]), array.array('B', chdata[1])
+
 
     def build_data_reader(self, raw=False):
         """
@@ -356,6 +404,7 @@ class Oscilloscope(object):
             assert False
         return fast_read_data
 
+
     def set_interface(self, alt):
         """
         Set the alternative interface (bulk or iso) to use.  This is only
@@ -378,6 +427,7 @@ class Oscilloscope(object):
         maxpacketsize = endpoint_info.getMaxPacketSize()
         self.packetsize = ((maxpacketsize >> 11)+1) * (maxpacketsize & 0x7ff)
         return True
+
 
     def read_async_iso(self, callback, packets, outstanding_transfers, raw):
         """
@@ -419,6 +469,7 @@ class Oscilloscope(object):
             transfer.submit()
         return shutdown_event
 
+
     def read_async_bulk(self, callback, packets, outstanding_transfers, raw):
         """
         Internal function to read from bulk channel.  External
@@ -459,6 +510,7 @@ class Oscilloscope(object):
             transfer.submit()
         return shutdown_event
 
+
     def read_async(self, callback, data_size, outstanding_transfers=3, raw=False):
         """
         Read both channel's ADC data from the device asynchronously. No trigger support, you need to do this in software.
@@ -480,6 +532,7 @@ class Oscilloscope(object):
         else:
             return self.read_async_bulk(callback, packets, outstanding_transfers, raw)
 
+
     @staticmethod
     def scale_read_data(read_data, voltage_range, probe_multiplier=1):
         """
@@ -493,6 +546,7 @@ class Oscilloscope(object):
         scale_factor = (5.0 * probe_multiplier)/(voltage_range << 7)
         return [(datum - 128)*scale_factor for datum in read_data]
 
+
     @staticmethod
     def voltage_to_adc(voltage, voltage_range, probe_multiplier=1):
         """
@@ -505,6 +559,7 @@ class Oscilloscope(object):
         """
         return voltage*(voltage_range << 7)/(5.0 * probe_multiplier) + 128
 
+
     @staticmethod
     def adc_to_voltage(adc_count, voltage_range, probe_multiplier=1):
         """
@@ -516,6 +571,7 @@ class Oscilloscope(object):
         :return: The analog voltage corresponding to that ADC count.
         """
         return (adc_count - 128)*(5.0 * probe_multiplier)/(voltage_range << 7)
+
 
     def set_sample_rate(self, rate_index, timeout=0):
         """
@@ -548,6 +604,7 @@ class Oscilloscope(object):
         assert bytes_written == 0x01
         return True
 
+
     def convert_sampling_rate_to_measurement_times(self, num_points, rate_index):
         """
         Convenience method for converting a sampling rate index into a list of times from beginning of data collection
@@ -558,6 +615,7 @@ class Oscilloscope(object):
         """
         rate_label, rate = self.SAMPLE_RATES.get(rate_index, ("? MS/s", 1.0))
         return [i/rate for i in range(num_points)], rate_label
+
 
     def set_num_channels(self, nchannels, timeout=0):
         """
@@ -579,6 +637,7 @@ class Oscilloscope(object):
             return True
         else:
             return False
+
 
     def set_ch1_voltage_range(self, range_index, timeout=0):
         """
@@ -602,6 +661,7 @@ class Oscilloscope(object):
                                                         pack("B", range_index), timeout=timeout)
         assert bytes_written == 0x01
         return True
+
 
     def set_ch2_voltage_range(self, range_index, timeout=0):
         """

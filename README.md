@@ -2,7 +2,9 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/Ho-Ro/Hantek6022API?branch=master&svg=true)](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) [![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
 
-This repo is a fork of [github.com/jhoenicke/Hantek6022API](https://github.com/jhoenicke/Hantek6022API) and focusses mainly on Hantek6022BE under Linux (development system: debian buster).
+This repo is based on the excellent work of [Robert](https://github.com/rpcope1/Hantek6022API) 
+and [Jochen](https://github.com/jhoenicke/Hantek6022API) 
+and focusses mainly on Hantek6022BE under Linux (development system: debian buster).
 
 __Hantek6022BE custom firmware is now feature complete and usable for https://github.com/Ho-Ro/openhantek__
 
