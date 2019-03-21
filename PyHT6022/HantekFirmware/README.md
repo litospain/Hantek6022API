@@ -14,13 +14,14 @@ and thus has all features like the stock and modded versions and allows an easy 
 The latest OpenHantek from https://github.com/Ho-Ro/openhantek already uses this custom FW. 
 
 Provided are different FW flavours as part of the python package:
+
+| ** Name            | **Path**                     | **Comment**                                                      |
 |--------------------|------------------------------|------------------------------------------------------------------|
 | stock_firmware     | stock/stock_fw.ihex          | Firmware that was originally uploaded to the device by vendor SW |
 | mod_firmware_01    | modded/mod_fw_01.ihex        | Patched stock firmware with sample rate and stability improvements |
 | mod_firmware_iso   | modded/mod_fw_iso.ihex       | Patched stock firmware that allows isochronous transfer (instead of bulk) |
 | custom_firmware_BE | custom_BE/build/firmware.ihx | Open source FW developed by Jochen Hoenicke & Sebastian Zagrodzki |
 | custom_firmware_BL | custom_BL/build/firmware.ihx | Open source FW based on custom_BE version adapted for 6022BL HW |
-|--------------------|------------------------------|-----------------------------------------------------------------|
 
 Default:
     default_firmware = custom_firmware = custom_firmware_BE
