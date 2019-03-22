@@ -1,3 +1,3 @@
 #!/bin/sh
 
-flash_firmware_from_hex.py build/firmware.ihx
+flash_firmware_from_hex.py build/dso6022be-firmware.hex

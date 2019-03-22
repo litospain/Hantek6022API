@@ -18,9 +18,11 @@
 
 # change location of fx2libdir if needed
 FX2LIBDIR=../fx2lib
-SOURCES=fw.c device.c
+# SOURCES=dso6022be.c
+# SOURCES=sig6022be.c
+SOURCES=device.c
 A51_SOURCES=dscr.a51
-BASENAME=firmware
+BASENAME=dso6022be-firmware
 
 
 DSCR_AREA=-Wl"-b DSCR_AREA=0x3d00"
@@ -29,5 +31,5 @@ CODE_SIZE=--code-size 0x3c00
 XRAM_LOC=--xram-loc 0x3c00
 XRAM_SIZE=--xram-size 0x0100
 
-include $(FX2LIBDIR)/lib/fx2.mk
+include fx2.mk
 
