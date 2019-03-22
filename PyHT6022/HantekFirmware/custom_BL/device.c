@@ -39,8 +39,6 @@
 #define LED_RED()   do { PC0 = 0; PC1 = 1; } while (0)
 #define LED_RED_TOGGLE() do { PC0 = !PC0; PC1 = 1; } while (0)
 
-#define TIMER2_VAL 500
-
 /* CTLx pin index (IFCLK, ADC clock input). */
 #define CTL_BIT 0
 

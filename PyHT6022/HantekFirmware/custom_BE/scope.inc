@@ -18,6 +18,11 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
+// CLK_12M; CLK_24M; CLK_48M
+#define CPU_FREQ  CLK_48M
+// 12 MHz: 500; 24 MHz: 1000; 48 MHz: 2000
+#define TIMER2_VAL 2000
+
 #define OE_CTL (((1 << CTL_BIT) << 4) | (1 << CTL_BIT)) /* OEx = CTLx = 1 */
 
 static BOOL set_voltage(BYTE channel, BYTE val);
@@ -297,21 +302,33 @@ static BOOL set_samplerate(BYTE rate)
 static BOOL set_calibration_pulse(BYTE fs)
 {
 	switch (fs) {
-	case 0:		// 100Hz
-		RCAP2L = -10000 & 0xff;
-		RCAP2H = (-10000 & 0xff00) >> 8;
+	case 0:		// 100 Hz
+		RCAP2L = -20000 & 0xff;
+		RCAP2H = (-20000 & 0xff00) >> 8;
 		return TRUE;
 	case 1:		// 1kHz
+		RCAP2L = -2000 & 0xff;
+		RCAP2H = (-2000 & 0xff00) >> 8;
+		return TRUE;
+	case 2:		// 2kHz
 		RCAP2L = -1000 & 0xff;
 		RCAP2H = (-1000 & 0xff00) >> 8;
 		return TRUE;
-	case 10:	// 1kHz
+	case 5:		// 5kHz
+		RCAP2L = -400 & 0xff;
+		RCAP2H = (-400 & 0xff00) >> 8;
+		return TRUE;
+	case 10:	// 10kHz
+		RCAP2L = (BYTE)(-200 & 0xff);
+		RCAP2H = (-200 & 0xff00) >> 8;
+		return TRUE;
+	case 20:	// 20kHz
 		RCAP2L = (BYTE)(-100 & 0xff);
-		RCAP2H = 0xff;
+		RCAP2H = (-100 & 0xff00) >> 8;
 		return TRUE;
 	case 50:	// 50kHz
-		RCAP2L = (BYTE)(-20 & 0xff);
-		RCAP2H = 0xff;
+		RCAP2L = (BYTE)(-40 & 0xff);
+		RCAP2H = (-40 & 0xff00) >> 8;
 		return TRUE;
 	default:
 		return FALSE;
@@ -413,10 +430,10 @@ BOOL handle_vendorcommand(BYTE cmd)
 	ledcounter = 1000;
 
 	/* Clear EP0BCH/L for each valid command. */
-	if (cmd >= 0xe0 && cmd <= 0xe6) {
+	if ( cmd >= 0xe0 && cmd <= 0xe6 ) {
 		EP0BCH = 0;
 		EP0BCL = 0;
-		while (EP0CS & bmEPBUSY);
+		while ( EP0CS & bmEPBUSY );
 	}
 
 	switch (cmd) {
@@ -427,10 +444,10 @@ BOOL handle_vendorcommand(BYTE cmd)
 		set_voltage(cmd - 0xe0, EP0BUF[0]);
 		return TRUE;
 	case 0xe2:
-		set_samplerate(EP0BUF[0]);
+		set_samplerate( EP0BUF[0] );
 		return TRUE;
 	case 0xe3:
-		if (EP0BUF[0] == 1) {
+		if ( EP0BUF[0] == 1 ) {
 			/* Set green LED, toggle LED afterwards. */
 			LED_GREEN();
 			ledcounter = 1000;
@@ -438,14 +455,13 @@ BOOL handle_vendorcommand(BYTE cmd)
 		}
 		return TRUE;
 	case 0xe4:
-		set_numchannels(EP0BUF[0]);
+		set_numchannels( EP0BUF[0] );
 		return TRUE;
 	case 0xe5:
-		SET_COUPLING(EP0BUF[0]);
+		SET_COUPLING( EP0BUF[0] );
 		return TRUE;
 	case 0xe6:
-		SET_CALIBRATION_PULSE(EP0BUF[0]);
-		return TRUE;
+		return set_calibration_pulse( EP0BUF[0] );
 	}
 
 	return FALSE; /* Not handled by handlers. */
@@ -476,7 +492,7 @@ static void init(void)
 static void main(void)
 {
 	/* Save energy. */
-	SETCPUFREQ(CLK_12M);
+	SETCPUFREQ( CPU_FREQ );
 
 	init();
 

@@ -45,6 +45,12 @@ class Oscilloscope(object):
     SET_NUMCH_VALUE = 0x00
     SET_NUMCH_INDEX = 0x00
 
+    # DC / AC : 0xe5
+
+    SET_CAL_FREQ_REQUEST = 0xe6
+    SET_CAL_FREQ_VALUE = 0x00
+    SET_CAL_FREQ_INDEX = 0x00
+
     CALIBRATION_EEPROM_OFFSET = 0x08
 
     SAMPLE_RATES = {10: ("100 KS/s", 100e3),
@@ -58,12 +64,23 @@ class Oscilloscope(object):
                     16: ( "16 MS/s",  16e6),
                     24: ( "24 MS/s",  24e6),
                     30: ( "30 MS/s",  30e6),
-                    48: ( "48 MS/s",  48e6)}
+                    48: ( "48 MS/s",  48e6) }
 
     VOLTAGE_RANGES = { 1: ('+/- 5V', 0.0390625, 2.5),
                        2: ('+/- 2.5V', 0.01953125, 1.25),
                        5: ('+/- 1V', 0.0078125, 0.5),
-                      10: ('+/- 500mV', 0.00390625, 0.25)}
+                      10: ('+/- 500mV', 0.00390625, 0.25) }
+
+    CAL_FREQUENCYS = {
+                       20: ( " 20 Hz",    20 ),
+                       50: ( " 50 Hz",    50 ),
+                      100: ( "100 Hz",   100 ),
+                        1: (  "1 kHz",  1000 ),
+                        2: (  "2 kHz",  2000 ),
+                        5: (  "5 kHz",  5000 ),
+                       10: ( "10 kHz", 10000 )
+                     }
+
 
 
     def __init__(self, scope_id=0):
@@ -593,13 +610,14 @@ class Oscilloscope(object):
                            48 <-> 48 MS/s
 
                            Other values are not supported.
-        :param timeout: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
+        :param timeout:
         :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
         """
         if not self.device_handle:
             assert self.open_handle()
         bytes_written = self.device_handle.controlWrite(0x40, self.SET_SAMPLE_RATE_REQUEST,
-                                                        self.SET_SAMPLE_RATE_VALUE, self.SET_SAMPLE_RATE_INDEX,
+                                                        self.SET_SAMPLE_RATE_VALUE,
+                                                        self.SET_SAMPLE_RATE_INDEX,
                                                         pack("B", rate_index), timeout=timeout)
         assert bytes_written == 0x01
         return True
@@ -622,7 +640,7 @@ class Oscilloscope(object):
         Set the number of active channels.  Either we sample only CH1 or we
         sample CH1 and CH2.
         :param nchannels: The number of active channels.  This is 1 or 2.
-        :param timeout: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
+        :param timeout: (OPTIONAL).
         :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
         """
         if self.supports_single_channel:
@@ -630,7 +648,8 @@ class Oscilloscope(object):
             if not self.device_handle:
                 assert self.open_handle()
             bytes_written = self.device_handle.controlWrite(0x40, self.SET_NUMCH_REQUEST,
-                                                            self.SET_NUMCH_VALUE, self.SET_NUMCH_INDEX,
+                                                            self.SET_NUMCH_VALUE,
+                                                            self.SET_NUMCH_INDEX,
                                                             pack("B", nchannels), timeout=timeout)
             assert bytes_written == 0x01
             self.num_channels = nchannels
@@ -651,13 +670,14 @@ class Oscilloscope(object):
                             This same range_index is given to the scale_read_data method to get nicely scaled
                             data in voltages returned from the scope.
 
-        :param timeout: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
+        :param timeout: (OPTIONAL).
         :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
         """
         if not self.device_handle:
             assert self.open_handle()
         bytes_written = self.device_handle.controlWrite(0x40, self.SET_CH1_VR_REQUEST,
-                                                        self.SET_CH1_VR_VALUE, self.SET_CH1_VR_INDEX,
+                                                        self.SET_CH1_VR_VALUE,
+                                                        self.SET_CH1_VR_INDEX,
                                                         pack("B", range_index), timeout=timeout)
         assert bytes_written == 0x01
         return True
@@ -675,13 +695,42 @@ class Oscilloscope(object):
                             This same range_index is given to the scale_read_data method to get nicely scaled
                             data in voltages returned from the scope.
 
-        :param timeout: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
+        :param timeout: (OPTIONAL).
         :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
         """
         if not self.device_handle:
             assert self.open_handle()
         bytes_written = self.device_handle.controlWrite(0x40, self.SET_CH2_VR_REQUEST,
-                                                        self.SET_CH2_VR_VALUE, self.SET_CH2_VR_INDEX,
+                                                        self.SET_CH2_VR_VALUE,
+                                                        self.SET_CH2_VR_INDEX,
                                                         pack("B", range_index), timeout=timeout)
         assert bytes_written == 0x01
         return True
+
+
+    def set_calibration_frequency(self, freq_index, timeout=0):
+        """
+        Set the frequency of the calibration output.
+        :param rate_index: The rate_index. These are the keys for the CAL_FREQUNCY dict for the Oscilloscope object.
+                           Common rate_index values and actual sample rate per channel:
+                            0 <-> 100 Hz
+                            1 <->   1 kHz
+                            2 <->   2 kHz
+                            5 <->   5 kHz
+                           10 <->  10 kHz
+                           20 <->  20 kHz
+                           50 <->  50 kHz
+                           Other values are not supported.
+        :param timeout: (OPTIONAL).
+        :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
+        """
+        if not self.device_handle:
+            assert self.open_handle()
+
+        bytes_written = self.device_handle.controlWrite(0x40, self.SET_CAL_FREQ_REQUEST,
+                                                        self.SET_CAL_FREQ_VALUE,
+                                                        self.SET_CAL_FREQ_INDEX,
+                                                        pack("B", freq_index), timeout=timeout)
+        assert bytes_written == 0x01
+        return True
+

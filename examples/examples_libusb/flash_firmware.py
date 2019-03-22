@@ -12,6 +12,6 @@ from PyHT6022.LibUsbScope import Oscilloscope
 scope = Oscilloscope()
 scope.setup()
 scope.open_handle()
-print( hex( scope.get_fw_version() ) )
 scope.flash_firmware()
+print( hex( scope.get_fw_version() ) )
 scope.close_handle()

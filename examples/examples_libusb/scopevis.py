@@ -14,7 +14,7 @@ def apply_data_smoothing(data, window=1):
     new_data.extend(data[-window:])
     return new_data
 
-sample_rate_index = 0x01
+sample_rate_index = 4
 voltage_range = 0x01
 # skip first samples due to unstable xfer
 skip = 2 * 0x400 
@@ -25,6 +25,7 @@ scope.setup()
 scope.open_handle()
 scope.set_sample_rate(sample_rate_index)
 scope.set_ch1_voltage_range(voltage_range)
+print( scope.set_calibration_frequency( 1 ) )
 
 ch1_data, _ = scope.read_data(data_points)#,raw=True)#timeout=1)
 
