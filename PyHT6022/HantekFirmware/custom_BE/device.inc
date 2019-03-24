@@ -19,9 +19,9 @@
  */
 
 // CLK_12M; CLK_24M; CLK_48M
-#define CPU_FREQ  CLK_48M
+#define CPU_FREQ  CLK_12M
 // 12 MHz: 500; 24 MHz: 1000; 48 MHz: 2000
-#define TIMER2_VAL 2000
+#define TIMER2_VAL 500
 
 #define OE_CTL (((1 << CTL_BIT) << 4) | (1 << CTL_BIT)) /* OEx = CTLx = 1 */
 
@@ -43,8 +43,11 @@ static BYTE samplerate = 0;
 static BYTE numchannels = 2;
 static BYTE fifocfg = 0;
 
-static volatile WORD ledcounter = 1000;
-static BOOL GREEN = FALSE;
+static volatile WORD ledinit = 500;
+static volatile WORD ledcounter = 500;
+static volatile BYTE setRCAP2L = 0;
+static volatile BYTE setRCAP2H = 0;
+
 
 static volatile __bit dosud = FALSE;
 static volatile __bit dosuspend = FALSE;
@@ -85,9 +88,14 @@ void timer2_isr(void) __interrupt TF2_ISR
 {
 	/* Toggle the probe calibration pin, only accurate up to ca. 8MHz. */
 	TOGGLE_CALIBRATION_PIN();
-	if ( --ledcounter <= 0 ) {
-		ledcounter = 500;
+	if ( ledcounter-- == 0 ) {
+		ledcounter = ledinit;
 		LED_RED_TOGGLE();
+		if ( setRCAP2H ) { // frequency setting has changed
+			RCAP2H = setRCAP2H;
+			RCAP2L = setRCAP2L;
+			setRCAP2H = setRCAP2L = 0;
+		}
 	}
 	TF2 = 0;
 }
@@ -134,7 +142,6 @@ static BOOL set_numchannels(BYTE num)
 		set_aadj();
 		return TRUE;
 	}
-
 	return FALSE;
 }
 
@@ -151,9 +158,9 @@ static void clear_fifo(void)
 	SYNCDELAY3;
 	EP6FIFOCFG = 0;
 	SYNCDELAY3;
-	FIFORESET = 0x02;
+	FIFORESET = 0x82;
 	SYNCDELAY3;
-	FIFORESET = 0x06;
+	FIFORESET = 0x86;
 	SYNCDELAY3;
 	EP2FIFOCFG = fifocfg;
 	SYNCDELAY3;
@@ -299,40 +306,69 @@ static BOOL set_samplerate(BYTE rate)
 }
 
 
-static BOOL set_calibration_pulse(BYTE fs)
+static BOOL set_calibration_frequency( BYTE calfreq )
 {
-	switch (fs) {
+	switch ( calfreq ) {
+	case 105:	// 50 Hz
+		ledinit = 25;
+		setRCAP2L = -40000L & 0xff;
+		setRCAP2H = (-40000L & 0xff00) >> 8;
+		break;
 	case 0:		// 100 Hz
-		RCAP2L = -20000 & 0xff;
-		RCAP2H = (-20000 & 0xff00) >> 8;
-		return TRUE;
+	case 110:
+		ledinit = 50;
+		setRCAP2L = -20000 & 0xff;
+		setRCAP2H = (-20000 & 0xff00) >> 8;
+		break;
+	case 120:	// 200 Hz
+		ledinit = 100;
+		setRCAP2L = -10000 & 0xff;
+		setRCAP2H = (-10000 & 0xff00) >> 8;
+		break;
+	case 150:		// 500 Hz
+		ledinit = 250;
+		setRCAP2L = -5000 & 0xff;
+		setRCAP2H = (-5000 & 0xff00) >> 8;
+		break;
 	case 1:		// 1kHz
-		RCAP2L = -2000 & 0xff;
-		RCAP2H = (-2000 & 0xff00) >> 8;
-		return TRUE;
+		ledinit = 500;
+		setRCAP2L = -2000 & 0xff;
+		setRCAP2H = (-2000 & 0xff00) >> 8;
+		break;
 	case 2:		// 2kHz
-		RCAP2L = -1000 & 0xff;
-		RCAP2H = (-1000 & 0xff00) >> 8;
-		return TRUE;
+		ledinit = 1000;
+		setRCAP2L = -1000 & 0xff;
+		setRCAP2H = (-1000 & 0xff00) >> 8;
+		break;
 	case 5:		// 5kHz
-		RCAP2L = -400 & 0xff;
-		RCAP2H = (-400 & 0xff00) >> 8;
-		return TRUE;
+		ledinit = 2500;
+		setRCAP2L = -400 & 0xff;
+		setRCAP2H = (-400 & 0xff00) >> 8;
+		break;
 	case 10:	// 10kHz
-		RCAP2L = (BYTE)(-200 & 0xff);
-		RCAP2H = (-200 & 0xff00) >> 8;
-		return TRUE;
+		ledinit = 5000;
+		setRCAP2L = (BYTE)(-200 & 0xff);
+		setRCAP2H = (-200 & 0xff00) >> 8;
+		break;
 	case 20:	// 20kHz
-		RCAP2L = (BYTE)(-100 & 0xff);
-		RCAP2H = (-100 & 0xff00) >> 8;
-		return TRUE;
+		ledinit = 10000;
+		setRCAP2L = (BYTE)(-100 & 0xff);
+		setRCAP2H = (-100 & 0xff00) >> 8;
+		break;
 	case 50:	// 50kHz
-		RCAP2L = (BYTE)(-40 & 0xff);
-		RCAP2H = (-40 & 0xff00) >> 8;
-		return TRUE;
+		ledinit = 25000;
+		setRCAP2L = (BYTE)(-40 & 0xff);
+		setRCAP2H = (-40 & 0xff00) >> 8;
+		break;
+	case 100:	// 100kHz
+		ledinit = 50000;
+		setRCAP2L = (BYTE)(-20 & 0xff);
+		setRCAP2H = (-20 & 0xff00) >> 8;
+		break;
 	default:
 		return FALSE;
 	}
+	return TRUE;
 }
 
 
@@ -427,44 +463,48 @@ BOOL handle_vendorcommand(BYTE cmd)
 
 	/* Set red LED, toggle after timeout. */
 	LED_RED();
-	ledcounter = 1000;
+	ledcounter = ledinit;
 
 	/* Clear EP0BCH/L for each valid command. */
 	if ( cmd >= 0xe0 && cmd <= 0xe6 ) {
 		EP0BCH = 0;
 		EP0BCL = 0;
-		while ( EP0CS & bmEPBUSY );
+		while ( EP0CS & bmEPBUSY )
+			;
 	}
 
 	switch (cmd) {
 	case 0xa2:
-		return eeprom();
+		eeprom();
+		break;
 	case 0xe0:
 	case 0xe1:
 		set_voltage(cmd - 0xe0, EP0BUF[0]);
-		return TRUE;
+		break;
 	case 0xe2:
 		set_samplerate( EP0BUF[0] );
-		return TRUE;
+		break;
 	case 0xe3:
 		if ( EP0BUF[0] == 1 ) {
 			/* Set green LED, toggle LED afterwards. */
 			LED_GREEN();
-			ledcounter = 1000;
+			ledcounter = ledinit;
 			start_sampling();
 		}
-		return TRUE;
+		break;
 	case 0xe4:
 		set_numchannels( EP0BUF[0] );
-		return TRUE;
+		break;
 	case 0xe5:
 		SET_COUPLING( EP0BUF[0] );
-		return TRUE;
+		break;
 	case 0xe6:
-		return set_calibration_pulse( EP0BUF[0] );
+		set_calibration_frequency( EP0BUF[0] );
+		break;
+	default:
+		return FALSE; /* Not handled by handlers. */
 	}
-
-	return FALSE; /* Not handled by handlers. */
+	return TRUE;
 }
 
 static void init(void)

@@ -11,7 +11,7 @@ fw_custom_BE:
 fw_custom_BL:
 	cd $(BL) && make
 
-install:
+install: all
 	python3 setup.py install
 	cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
 
@@ -20,10 +20,6 @@ deb:
 
 clean:
 	-rm *~ .*~ 
-	-rm $(BE)/*~
-	-rm $(BL)/*~
-	-rm $(BEb)/*.asm $(BEb)/*.a51 $(BEb)/*.rel $(BEb)/*.sym $(BEb)/*.lst $(BEb)/*.rst 
-	-rm $(BEb)/*.lk $(BEb)/*.map $(BEb)/*.mem
-	-rm $(BLb)/*.asm $(BLb)/*.a51 $(BLb)/*.rel $(BLb)/*.sym $(BLb)/*.lst $(BLb)/*.rst
-	-rm $(BLb)/*.lk $(BLb)/*.map $(BLb)/*.mem
+	( cd $(BE) && make clean )
+	( cd $(BL) && make clean )
 

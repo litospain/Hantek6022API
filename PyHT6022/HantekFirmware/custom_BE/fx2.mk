@@ -38,7 +38,7 @@
 AS8051?=sdas8051
 
 VID?=0x04b4
-PID?=0x8613
+PID?=0x6022
 
 INCLUDES?=""
 DSCR_AREA?=-Wl"-b DSCR_AREA=0x3e00"
@@ -56,16 +56,16 @@ RELS=$(addprefix $(BUILDDIR)/, $(addsuffix .rel, $(notdir $(basename $(SOURCES) 
 # firmwares that require more xram etc.
 CC = sdcc -mmcs51 \
 	$(SDCCFLAGS) \
-    $(CODE_SIZE) \
-    $(XRAM_SIZE) \
-    $(XRAM_LOC) \
+	$(CODE_SIZE) \
+	$(XRAM_SIZE) \
+	$(XRAM_LOC) \
 	$(DSCR_AREA) \
 	$(INT2JT)
 
 
-.PHONY: all ihx iic bix load clean clean-all
+.PHONY: all hex ihx iic bix load clean
 
-all: hex
+all: hex 
 hex: $(BUILDDIR)/$(BASENAME).hex
 ihx: $(BUILDDIR)/$(BASENAME).ihx
 bix: $(BUILDDIR)/$(BASENAME).bix
@@ -77,7 +77,7 @@ $(FX2LIBDIR)/lib/fx2.lib: $(FX2LIBDIR)/lib/*.c $(FX2LIBDIR)/lib/*.a51
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
-$(BUILDDIR)/$(BASENAME).hex: $(BUILDDIR) $(SOURCES) $(A51_SOURCES) $(FX2LIBDIR)/lib/fx2.lib $(DEPS) 
+$(BUILDDIR)/$(BASENAME).hex: $(BUILDDIR) $(SOURCES) $(C_INCS) $(A51_SOURCES) $(A_INCS) $(FX2LIBDIR)/lib/fx2.lib $(DEPS) 
 # can't use default target %.rel because there is no way
 # to differentiate the dependency.  (Is it %.rel: %.c or %.a51)
 	for a in $(A51_SOURCES); do \
@@ -101,17 +101,15 @@ $(BUILDDIR)/$(BASENAME).ihx: $(BUILDDIR) $(SOURCES) $(A51_SOURCES) $(FX2LIBDIR)/
 	$(CC) -o $@ $(RELS) fx2.lib -L $(FX2LIBDIR)/lib $(LIBS)
 
 
-$(BUILDDIR)/$(BASENAME).bix: $(BUILDDIR)/$(BASENAME).ihx
+$(BUILDDIR)/$(BASENAME).bix: $(BUILDDIR)/$(BASENAME).hex
 	objcopy -I ihex -O binary $< $@
-$(BUILDDIR)/$(BASENAME).iic: $(BUILDDIR)/$(BASENAME).ihx
+$(BUILDDIR)/$(BASENAME).iic: $(BUILDDIR)/$(BASENAME).hex
 	$(FX2LIBDIR)/utils/ihx2iic.py -v $(VID) -p $(PID) $< $@
 
 load: $(BUILDDIR)/$(BASENAME).bix
 	fx2load -v $(VID) -p $(PID) $(BUILDDIR)/$(BASENAME).bix
 
 clean:
-	rm -f $(BUILDDIR)/*.{asm,ihx,lnk,lst,map,mem,rel,rst,sym,adb,cdb,bix}
+	( cd $(BUILDDIR) && rm -f *.asm *.bix *.lk *.lst *.map *.mem *.rel *.rst *.sym )
 
-clean-all: clean
-	$(MAKE) -C $(FX2LIBDIR)/lib clean
 

@@ -37,14 +37,17 @@ struct samplerate_info {
         BYTE ifcfg;
 };
 
+
 /* Change to support as many interfaces as you need. */
 static BYTE altiface = 0;
 static BYTE samplerate = 0;
 static BYTE numchannels = 2;
 static BYTE fifocfg = 0;
 
-static volatile WORD ledcounter = 1000;
-static BOOL GREEN = FALSE;
+static volatile WORD ledinit = 500;
+static volatile WORD ledcounter = 500;
+static volatile BYTE setRCAP2L = 0;
+static volatile BYTE setRCAP2H = 0;
 
 static volatile __bit dosud = FALSE;
 static volatile __bit dosuspend = FALSE;
@@ -52,10 +55,12 @@ static volatile __bit dosuspend = FALSE;
 extern __code BYTE highspd_dscr;
 extern __code BYTE fullspd_dscr;
 
+
 void resume_isr(void) __interrupt RESUME_ISR
 {
 	CLEAR_RESUME();
 }
+
 
 void sudav_isr(void) __interrupt SUDAV_ISR
 {
@@ -63,11 +68,13 @@ void sudav_isr(void) __interrupt SUDAV_ISR
 	CLEAR_SUDAV();
 }
 
+
 void usbreset_isr(void) __interrupt USBRESET_ISR
 {
 	handle_hispeed(FALSE);
 	CLEAR_USBRESET();
 }
+
 
 void hispeed_isr(void) __interrupt HISPEED_ISR
 {
@@ -75,19 +82,26 @@ void hispeed_isr(void) __interrupt HISPEED_ISR
 	CLEAR_HISPEED();
 }
 
+
 void suspend_isr(void) __interrupt SUSPEND_ISR
 {
 	dosuspend = TRUE;
 	CLEAR_SUSPEND();
 }
 
+
 void timer2_isr(void) __interrupt TF2_ISR
 {
 	/* Toggle the probe calibration pin, only accurate up to ca. 8MHz. */
 	TOGGLE_CALIBRATION_PIN();
-	if ( --ledcounter <= 0 ) {
-		ledcounter = 500;
+	if ( ledcounter-- == 0 ) {	// led timed out
+		ledcounter = ledinit;	// reload
 		LED_RED_TOGGLE();
+		if ( setRCAP2H ) { 	// frequency has changed
+			RCAP2H = setRCAP2H;
+			RCAP2L = setRCAP2L;
+			setRCAP2H = setRCAP2L = 0;
+		}
 	}
 	TF2 = 0;
 }
@@ -134,7 +148,6 @@ static BOOL set_numchannels(BYTE num)
 		set_aadj();
 		return TRUE;
 	}
-
 	return FALSE;
 }
 
@@ -161,6 +174,7 @@ static void clear_fifo(void)
 	SYNCDELAY3;
 	FIFORESET = 0;
 }
+
 
 static void stop_sampling(void)
 {
@@ -196,7 +210,7 @@ static void select_interface(BYTE alt)
 {
 	const BYTE *pPacketSize = \
 		((USBCS & bmHSM) ? &highspd_dscr : &fullspd_dscr)
-		+ ( 9 + 9 + 4 + alt *( 9 + 7 ) );
+		+ ( 9 + 9 + 4 + alt * ( 9 + 7 ) );
 
 	altiface = alt;
 
@@ -226,7 +240,7 @@ static BOOL set_samplerate(BYTE rate)
 
 	while (samplerates[i].rate != rate) {
 		i++;
-		if (i == sizeof(samplerates) / sizeof(samplerates[0]))
+		if ( i == sizeof(samplerates) / sizeof(samplerates[0]) )
 			return FALSE;
 	}
 
@@ -302,37 +316,66 @@ static BOOL set_samplerate(BYTE rate)
 static BOOL set_calibration_pulse(BYTE fs)
 {
 	switch (fs) {
-	case 0:		// 100 Hz
-		RCAP2L = -20000 & 0xff;
-		RCAP2H = (-20000 & 0xff00) >> 8;
-		return TRUE;
-	case 1:		// 1kHz
-		RCAP2L = -2000 & 0xff;
-		RCAP2H = (-2000 & 0xff00) >> 8;
-		return TRUE;
-	case 2:		// 2kHz
-		RCAP2L = -1000 & 0xff;
-		RCAP2H = (-1000 & 0xff00) >> 8;
-		return TRUE;
-	case 5:		// 5kHz
-		RCAP2L = -400 & 0xff;
-		RCAP2H = (-400 & 0xff00) >> 8;
-		return TRUE;
-	case 10:	// 10kHz
-		RCAP2L = (BYTE)(-200 & 0xff);
-		RCAP2H = (-200 & 0xff00) >> 8;
-		return TRUE;
-	case 20:	// 20kHz
-		RCAP2L = (BYTE)(-100 & 0xff);
-		RCAP2H = (-100 & 0xff00) >> 8;
-		return TRUE;
-	case 50:	// 50kHz
-		RCAP2L = (BYTE)(-40 & 0xff);
-		RCAP2H = (-40 & 0xff00) >> 8;
-		return TRUE;
+	case 105:		// 50 Hz
+		ledinit = 25;
+		setRCAP2L = -40000L & 0xff;
+		setRCAP2H = (-40000L & 0xff00) >> 8;
+		break;
+	case 0:
+	case 110:		// 100 Hz
+		ledinit = 50;
+		setRCAP2L = -20000 & 0xff;
+		setRCAP2H = (-20000 & 0xff00) >> 8;
+		break;
+	case 120:		// 200 Hz
+		ledinit = 100;
+		setRCAP2L = -10000 & 0xff;
+		setRCAP2H = (-10000 & 0xff00) >> 8;
+		break;
+	case 150:		// 500 Hz
+		ledinit = 250;
+		setRCAP2L = -5000 & 0xff;
+		setRCAP2H = (-5000 & 0xff00) >> 8;
+		break;
+	case 1:			// 1kHz
+		ledinit = 500;
+		setRCAP2L = -2000 & 0xff;
+		setRCAP2H = (-2000 & 0xff00) >> 8;
+		break;
+	case 2:			// 2kHz
+		ledinit = 1000;
+		setRCAP2L = -1000 & 0xff;
+		setRCAP2H = (-1000 & 0xff00) >> 8;
+		break;
+	case 5:			// 5kHz
+		ledinit = 2500;
+		setRCAP2L = -400 & 0xff;
+		setRCAP2H = (-400 & 0xff00) >> 8;
+		break;
+	case 10:		// 10kHz
+		ledinit = 5000;
+		setRCAP2L = (BYTE)(-200 & 0xff);
+		setRCAP2H = (-200 & 0xff00) >> 8;
+		break;
+	case 20:		// 20kHz
+		ledinit = 10000;
+		setRCAP2L = (BYTE)(-100 & 0xff);
+		setRCAP2H = (-100 & 0xff00) >> 8;
+		break;
+	case 50:		// 50kHz
+		ledinit = 25000;
+		setRCAP2L = (BYTE)(-40 & 0xff);
+		setRCAP2H = (-40 & 0xff00) >> 8;
+		break;
+	case 100:		// 100kHz
+		ledinit = 50000;
+		setRCAP2L = (BYTE)(-20 & 0xff);
+		setRCAP2H = (-20 & 0xff00) >> 8;
+		break;
 	default:
 		return FALSE;
 	}
+	return TRUE;
 }
 
 
@@ -343,6 +386,7 @@ BOOL handle_get_interface(BYTE ifc, BYTE *alt_ifc)
 	*alt_ifc = altiface;
 	return TRUE;
 }
+
 
 /*
  * Return TRUE if you set the interface requested.
@@ -357,6 +401,7 @@ BOOL handle_set_interface(BYTE ifc,BYTE alt_ifc)
 
 	return TRUE;
 }
+
 
 BYTE handle_get_configuration(void)
 {
@@ -441,22 +486,19 @@ BOOL handle_vendorcommand(BYTE cmd)
 		return eeprom();
 	case 0xe0:
 	case 0xe1:
-		set_voltage(cmd - 0xe0, EP0BUF[0]);
-		return TRUE;
+		return set_voltage(cmd - 0xe0, EP0BUF[0]);
 	case 0xe2:
-		set_samplerate( EP0BUF[0] );
-		return TRUE;
+		return set_samplerate( EP0BUF[0] );
 	case 0xe3:
 		if ( EP0BUF[0] == 1 ) {
-			/* Set green LED, toggle LED afterwards. */
+			/* Set green LED, toggle red LED afterwards. */
 			LED_GREEN();
-			ledcounter = 1000;
+			ledcounter = ledinit;
 			start_sampling();
 		}
 		return TRUE;
 	case 0xe4:
-		set_numchannels( EP0BUF[0] );
-		return TRUE;
+		return set_numchannels( EP0BUF[0] );
 	case 0xe5:
 		SET_COUPLING( EP0BUF[0] );
 		return TRUE;
@@ -466,6 +508,7 @@ BOOL handle_vendorcommand(BYTE cmd)
 
 	return FALSE; /* Not handled by handlers. */
 }
+
 
 static void init(void)
 {
@@ -488,6 +531,7 @@ static void init(void)
 	set_numchannels(2);
 	select_interface(0);
 }
+
 
 static void main(void)
 {

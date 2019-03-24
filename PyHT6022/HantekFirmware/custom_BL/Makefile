@@ -18,8 +18,10 @@
 
 # change location of fx2libdir if needed
 FX2LIBDIR=../fx2lib
-SOURCES=device.c
-A51_SOURCES=dscr.a51
+SOURCES=scope6022.c
+C_INCS=../custom_BE/scope6022.inc
+A51_SOURCES=descriptor.asm
+A_INCS=../custom_BE/descriptor.inc
 BASENAME=dso6022bl-firmware
 
 
@@ -29,5 +31,5 @@ CODE_SIZE=--code-size 0x3c00
 XRAM_LOC=--xram-loc 0x3c00
 XRAM_SIZE=--xram-size 0x0100
 
-include fx2.mk
+include ../custom_BE/fx2.mk
 

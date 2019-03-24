@@ -72,13 +72,17 @@ class Oscilloscope(object):
                       10: ('+/- 500mV', 0.00390625, 0.25) }
 
     CAL_FREQUENCYS = {
-                       20: ( " 20 Hz",    20 ),
-                       50: ( " 50 Hz",    50 ),
-                      100: ( "100 Hz",   100 ),
-                        1: (  "1 kHz",  1000 ),
-                        2: (  "2 kHz",  2000 ),
-                        5: (  "5 kHz",  5000 ),
-                       10: ( "10 kHz", 10000 )
+                      105: ( " 50 Hz",     50 ),
+                      110: ( "100 Hz",    100 ),
+                      120: ( "200 Hz",    200 ),
+                      150: ( "500 Hz",    500 ),
+                        1: (  "1 kHz",   1000 ),
+                        2: (  "2 kHz",   2000 ),
+                        5: (  "5 kHz",   5000 ),
+                       10: ( "10 kHz",  10000 ),
+                       20: ( "20 kHz",  20000 ),
+                       50: ( "50 kHz",  50000 ),
+                      100: ("100 kHz", 100000 )
                      }
 
 
@@ -713,13 +717,17 @@ class Oscilloscope(object):
         Set the frequency of the calibration output.
         :param rate_index: The rate_index. These are the keys for the CAL_FREQUNCY dict for the Oscilloscope object.
                            Common rate_index values and actual sample rate per channel:
-                            0 <-> 100 Hz
+                          105 <->  50 Hz
+                          110 <-> 100 Hz
+                          120 <-> 200 Hz
+                          150 <-> 500 Hz
                             1 <->   1 kHz
                             2 <->   2 kHz
                             5 <->   5 kHz
                            10 <->  10 kHz
                            20 <->  20 kHz
                            50 <->  50 kHz
+                          100 <-> 100 kHz
                            Other values are not supported.
         :param timeout: (OPTIONAL).
         :return: True if successful. This method may assert or raise various libusb errors if something went wrong.

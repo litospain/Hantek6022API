@@ -40,6 +40,7 @@ nosetests.xml
 *.orig
 *.test
 *.new
+*.old
 
 # Debian
 doc-pak

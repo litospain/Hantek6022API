@@ -107,5 +107,5 @@ static BOOL set_voltage(BYTE channel, BYTE val)
 	return TRUE;
 }
 
-#include "scope.inc"
+#include "scope6022.inc"
 
