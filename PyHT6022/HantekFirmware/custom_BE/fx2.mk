@@ -65,7 +65,12 @@ CC = sdcc -mmcs51 \
 
 .PHONY: all hex ihx iic bix load clean
 
-all: hex 
+
+all: $(BASENAME).hex
+
+$(BASENAME).hex: $(BUILDDIR)/$(BASENAME).hex
+	cp $(BUILDDIR)/$(BASENAME).hex .
+
 hex: $(BUILDDIR)/$(BASENAME).hex
 ihx: $(BUILDDIR)/$(BASENAME).ihx
 bix: $(BUILDDIR)/$(BASENAME).bix
@@ -110,6 +115,6 @@ load: $(BUILDDIR)/$(BASENAME).bix
 	fx2load -v $(VID) -p $(PID) $(BUILDDIR)/$(BASENAME).bix
 
 clean:
-	( cd $(BUILDDIR) && rm -f *.asm *.bix *.lk *.lst *.map *.mem *.rel *.rst *.sym )
+	( cd $(BUILDDIR) && rm -f *.asm *.bix *.hex *.ihx *.lk *.lst *.map *.mem *.rel *.rst *.sym )
 
 

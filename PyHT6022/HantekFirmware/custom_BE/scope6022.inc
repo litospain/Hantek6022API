@@ -28,13 +28,13 @@
 static BOOL set_voltage(BYTE channel, BYTE val);
 
 struct samplerate_info {
-        BYTE rate;
-        BYTE wait0;
-        BYTE wait1;
-        BYTE opc0;
-        BYTE opc1;
-        BYTE out0;
-        BYTE ifcfg;
+	BYTE rate;
+	BYTE wait0;
+	BYTE wait1;
+	BYTE opc0;
+	BYTE opc1;
+	BYTE out0;
+	BYTE ifcfg;
 };
 
 
@@ -46,8 +46,6 @@ static BYTE fifocfg = 0;
 
 static volatile WORD ledinit = 500;
 static volatile WORD ledcounter = 500;
-static volatile BYTE setRCAP2L = 0;
-static volatile BYTE setRCAP2H = 0;
 
 static volatile __bit dosud = FALSE;
 static volatile __bit dosuspend = FALSE;
@@ -97,11 +95,6 @@ void timer2_isr(void) __interrupt TF2_ISR
 	if ( ledcounter-- == 0 ) {	// led timed out
 		ledcounter = ledinit;	// reload
 		LED_RED_TOGGLE();
-		if ( setRCAP2H ) { 	// frequency has changed
-			RCAP2H = setRCAP2H;
-			RCAP2L = setRCAP2L;
-			setRCAP2H = setRCAP2L = 0;
-		}
 	}
 	TF2 = 0;
 }
@@ -313,64 +306,64 @@ static BOOL set_samplerate(BYTE rate)
 }
 
 
-static BOOL set_calibration_pulse(BYTE fs)
+static BOOL set_calibration_pulse( BYTE freq )
 {
-	switch (fs) {
+	switch ( freq ) {
 	case 105:		// 50 Hz
 		ledinit = 25;
-		setRCAP2L = -40000L & 0xff;
-		setRCAP2H = (-40000L & 0xff00) >> 8;
+		RCAP2L = -40000L & 0xff;
+		RCAP2H = (-40000L & 0xff00) >> 8;
 		break;
 	case 0:
 	case 110:		// 100 Hz
 		ledinit = 50;
-		setRCAP2L = -20000 & 0xff;
-		setRCAP2H = (-20000 & 0xff00) >> 8;
+		RCAP2L = -20000 & 0xff;
+		RCAP2H = (-20000 & 0xff00) >> 8;
 		break;
 	case 120:		// 200 Hz
 		ledinit = 100;
-		setRCAP2L = -10000 & 0xff;
-		setRCAP2H = (-10000 & 0xff00) >> 8;
+		RCAP2L = -10000 & 0xff;
+		RCAP2H = (-10000 & 0xff00) >> 8;
 		break;
 	case 150:		// 500 Hz
 		ledinit = 250;
-		setRCAP2L = -5000 & 0xff;
-		setRCAP2H = (-5000 & 0xff00) >> 8;
+		RCAP2L = -4000 & 0xff;
+		RCAP2H = (-4000 & 0xff00) >> 8;
 		break;
 	case 1:			// 1kHz
 		ledinit = 500;
-		setRCAP2L = -2000 & 0xff;
-		setRCAP2H = (-2000 & 0xff00) >> 8;
+		RCAP2L = -2000 & 0xff;
+		RCAP2H = (-2000 & 0xff00) >> 8;
 		break;
 	case 2:			// 2kHz
 		ledinit = 1000;
-		setRCAP2L = -1000 & 0xff;
-		setRCAP2H = (-1000 & 0xff00) >> 8;
+		RCAP2L = -1000 & 0xff;
+		RCAP2H = (-1000 & 0xff00) >> 8;
 		break;
 	case 5:			// 5kHz
 		ledinit = 2500;
-		setRCAP2L = -400 & 0xff;
-		setRCAP2H = (-400 & 0xff00) >> 8;
+		RCAP2L = -400 & 0xff;
+		RCAP2H = (-400 & 0xff00) >> 8;
 		break;
 	case 10:		// 10kHz
 		ledinit = 5000;
-		setRCAP2L = (BYTE)(-200 & 0xff);
-		setRCAP2H = (-200 & 0xff00) >> 8;
+		RCAP2L = (BYTE)(-200 & 0xff);
+		RCAP2H = (-200 & 0xff00) >> 8;
 		break;
 	case 20:		// 20kHz
 		ledinit = 10000;
-		setRCAP2L = (BYTE)(-100 & 0xff);
-		setRCAP2H = (-100 & 0xff00) >> 8;
+		RCAP2L = (BYTE)(-100 & 0xff);
+		RCAP2H = (-100 & 0xff00) >> 8;
 		break;
 	case 50:		// 50kHz
 		ledinit = 25000;
-		setRCAP2L = (BYTE)(-40 & 0xff);
-		setRCAP2H = (-40 & 0xff00) >> 8;
+		RCAP2L = (BYTE)(-40 & 0xff);
+		RCAP2H = (-40 & 0xff00) >> 8;
 		break;
 	case 100:		// 100kHz
 		ledinit = 50000;
-		setRCAP2L = (BYTE)(-20 & 0xff);
-		setRCAP2H = (-20 & 0xff00) >> 8;
+		RCAP2L = (BYTE)(-20 & 0xff);
+		RCAP2H = (-20 & 0xff00) >> 8;
 		break;
 	default:
 		return FALSE;
@@ -414,50 +407,49 @@ BOOL handle_set_configuration(BYTE cfg)
 {
 	/* We only support configuration 0. */
 	(void)cfg;
-
 	return TRUE;
 }
 
 
 // handle reading and writing EEPROM data
 BOOL eeprom() {
-    WORD addr=SETUP_VALUE(), len=SETUP_LENGTH();
-    // wait for ep0 not busy
-    while ( EP0CS & bmEPBUSY )
-        ;
-    switch ( SETUP_TYPE ) {
-        case 0xc0: // read access
-            while ( len ) { // still have bytes to read
-                BYTE cur_read = len > 64 ? 64 : len; // can't read more than 64 bytes at a time
-                while ( EP0CS&bmEPBUSY ) // can't do this until EP0 is ready
-                    ;
-                eeprom_read( 0x51, addr, cur_read, EP0BUF );
-                EP0BCH=0;
-                SYNCDELAY3;
-                EP0BCL=cur_read;
-                len -= cur_read;
-                addr += cur_read;
-            }
-            break;
-        case 0x40: // write access
-            while ( len ) {
-                BYTE cur_write;
-                // printf ( "Len More Bytes %d\n" , len );
-                EP0BCL = 0; // allow pc transfer in
-                while ( EP0CS & bmEPBUSY ) // wait
-                    ;
-                cur_write = EP0BCL;
-                // printf ( "Writing %d Bytes to %d..\n", cur_write, addr );
-                if ( !eeprom_write( 0x51, addr, cur_write, EP0BUF ) )
-                    return FALSE;
-                addr += cur_write;
-                len -= cur_write;
-            }
-            break;
-        default:
-            return FALSE; // bad type
-    }
-    return TRUE;
+	WORD addr=SETUP_VALUE(), len=SETUP_LENGTH();
+	// wait for ep0 not busy
+	while ( EP0CS & bmEPBUSY )
+		;
+	switch ( SETUP_TYPE ) {
+		case 0xc0: // read access
+			while ( len ) { // still have bytes to read
+				BYTE cur_read = len > 64 ? 64 : len; // can't read more than 64 bytes at a time
+				while ( EP0CS&bmEPBUSY ) // can't do this until EP0 is ready
+					;
+				eeprom_read( 0x51, addr, cur_read, EP0BUF );
+				EP0BCH=0;
+				SYNCDELAY3;
+				EP0BCL=cur_read;
+				len -= cur_read;
+				addr += cur_read;
+			}
+			break;
+		case 0x40: // write access
+			while ( len ) {
+				BYTE cur_write;
+				// printf ( "Len More Bytes %d\n" , len );
+				EP0BCL = 0; // allow pc transfer in
+				while ( EP0CS & bmEPBUSY ) // wait
+					;
+				cur_write = EP0BCL;
+				// printf ( "Writing %d Bytes to %d..\n", cur_write, addr );
+				if ( !eeprom_write( 0x51, addr, cur_write, EP0BUF ) )
+					return FALSE;
+				addr += cur_write;
+				len -= cur_write;
+			}
+			break;
+		default:
+			return FALSE; // bad type
+	}
+	return TRUE;
 }
 
 
@@ -478,32 +470,42 @@ BOOL handle_vendorcommand(BYTE cmd)
 	if ( cmd >= 0xe0 && cmd <= 0xe6 ) {
 		EP0BCH = 0;
 		EP0BCL = 0;
-		while ( EP0CS & bmEPBUSY );
+		while ( EP0CS & bmEPBUSY )
+			;
 	}
 
 	switch (cmd) {
-	case 0xa2:
-		return eeprom();
-	case 0xe0:
-	case 0xe1:
-		return set_voltage(cmd - 0xe0, EP0BUF[0]);
-	case 0xe2:
-		return set_samplerate( EP0BUF[0] );
-	case 0xe3:
-		if ( EP0BUF[0] == 1 ) {
-			/* Set green LED, toggle red LED afterwards. */
-			LED_GREEN();
-			ledcounter = ledinit;
-			start_sampling();
-		}
-		return TRUE;
-	case 0xe4:
-		return set_numchannels( EP0BUF[0] );
-	case 0xe5:
-		SET_COUPLING( EP0BUF[0] );
-		return TRUE;
-	case 0xe6:
-		return set_calibration_pulse( EP0BUF[0] );
+		case 0xa2:
+			return eeprom();
+
+		case 0xe0:
+			return set_voltage( 0, EP0BUF[0] );
+
+		case 0xe1:
+			return set_voltage( 1, EP0BUF[0] );
+
+		case 0xe2:
+			return set_samplerate( EP0BUF[0] );
+
+		case 0xe3:
+			if ( EP0BUF[0] == 1 ) {
+				/* Set green LED, toggle red LED afterwards. */
+				LED_GREEN();
+				ledcounter = ledinit;
+				start_sampling();
+			}
+			return TRUE;
+
+		case 0xe4:
+			return set_numchannels( EP0BUF[0] );
+
+		case 0xe5:
+			SET_COUPLING( EP0BUF[0] );
+			return TRUE;
+
+		case 0xe6:
+			return set_calibration_pulse( EP0BUF[0] );
+
 	}
 
 	return FALSE; /* Not handled by handlers. */
