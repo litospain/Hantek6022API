@@ -41,7 +41,7 @@ base_path = os.path.dirname(os.path.realpath(__file__))
 stock_firmware = fx2_ihex_to_control_packets(os.path.join(base_path, 'stock', 'stock_fw.ihex'))
 mod_firmware_01 = fx2_ihex_to_control_packets(os.path.join(base_path, 'modded', 'mod_fw_01.ihex'))
 mod_firmware_iso = fx2_ihex_to_control_packets(os.path.join(base_path, 'modded', 'mod_fw_iso.ihex'))
-custom_firmware_BE = fx2_ihex_to_control_packets(os.path.join(base_path, 'custom_BE', 'build', 'dso6022be-firmware.hex'))
-custom_firmware_BL = fx2_ihex_to_control_packets(os.path.join(base_path, 'custom_BL', 'build', 'dso6022bl-firmware.hex'))
+custom_firmware_BE = fx2_ihex_to_control_packets(os.path.join(base_path, 'custom_BE', 'dso6022be-firmware.hex'))
+custom_firmware_BL = fx2_ihex_to_control_packets(os.path.join(base_path, 'custom_BL', 'dso6022bl-firmware.hex'))
 default_firmware = custom_firmware = custom_firmware_BE
 

@@ -195,10 +195,12 @@ class Oscilloscope(object):
         if not self.device_handle:
             assert self.open_handle()
         if not firmware: # called without an explicit firmware parameter
-            if self.device.getVendorID() == self.MODEL_ID_BL: # special case of 6022BL
-                firmware = custom_firmware_BL
-            else: # normal case
+            if self.device.getProductID() == self.MODEL_ID_BE:
                 firmware = custom_firmware_BE
+            elif self.device.getProductID() == self.MODEL_ID_BL:
+                firmware = custom_firmware_BL
+            else:
+                return False
         for packet in firmware:
             bytes_written = self.device_handle.controlWrite(0x40, self.RW_FIRMWARE_REQUEST,
                                                             packet.value, self.RW_FIRMWARE_INDEX,
