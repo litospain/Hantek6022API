@@ -76,7 +76,7 @@ static const struct samplerate_info samplerates[] = {
  * The third bit is always zero since there are only four outputs connected
  * in the serial selector chip.
  *
- * The multiplication of the converted value by 0x24 sets the relevant bits in
+ * The multiplication of the converted value by 0x12 sets the relevant bits in
  * both channels and then we mask it out to only affect the channel currently
  * requested.
  */
@@ -86,22 +86,21 @@ static BOOL set_voltage(BYTE channel, BYTE val)
 
 	switch (val) {
 	case 1:
-		bits = 0x02;
+		bits = 0x12 * 2;
 		break;
 	case 2:
-		bits = 0x01;
+		bits = 0x12 * 1;
 		break;
 	case 5:
-		bits = 0x00;
+		bits = 0x12 * 0;
 		break;
 	case 10:
-		bits = 0x03;
+		bits = 0x12 * 3;
 		break;
 	default:
 		return FALSE;
 	}
 
-	bits = bits << (channel ? 1 : 4);
 	mask = (channel) ? 0x70 : 0x0e;
 	IOA = (IOA & ~mask) | (bits & mask);
 
