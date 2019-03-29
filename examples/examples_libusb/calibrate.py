@@ -14,12 +14,15 @@ Program to calibrate offset and gain of 6022BE/BL
 '''
 
 
-def read_avg( voltage_range, sample_rate=10, samples = 10240 ):
-	skip = 2048 # skip first samples
+def read_avg( voltage_range, sample_rate=10, samples = 12 * 1024 ):
 	scope.set_sample_rate( sample_rate )
 	scope.set_ch1_voltage_range(voltage_range)
 	scope.set_ch2_voltage_range(voltage_range)
-	ch1_data, ch2_data = scope.read_data( samples+skip, raw=True, timeout=0)
+	ch1_data, ch2_data = scope.read_data( samples, raw=True, timeout=0)
+
+	# skip first samples and keep 10000 
+	# average over 100ms @ 100kS/s -> 5 cycles @ 50 Hz or 6 cycles @ 60 Hz)
+	skip = samples - 10000
 
 	# print( len( ch1_data), len( ch2_data ) )
 
@@ -54,13 +57,14 @@ print("Setting up scope!")
 
 scope.set_num_channels( 2 )
 
-offset = []
+offset = bytearray()
 
 for sample_rate in ( 1, 30 ):
 
 
 	for voltage_range in ( 10, 5, 2, 1 ):
 		avg1, avg2 = read_avg( voltage_range, sample_rate )
+		#avg1, avg2 = ( 0x55, 0x75 )
 
 		print( sample_rate, voltage_range, avg1, avg2, sep='\t' )
 
@@ -70,10 +74,12 @@ for sample_rate in ( 1, 30 ):
 print( offset )
 
 
-i1 = 0
-for gain in ( 10, 5, 2, 1 ):
+gain = bytearray( 16 )
 
-	voltage = 4 / gain
+i1 = 0
+for voltage_range in ( 10, 5, 2, 1 ):
+
+	voltage = 4 / voltage_range
 	input( 'set voltage (max %4.2f V) ' % voltage )
 	i2 = 0
 	for sample_rate in ( 1, 30 ):
@@ -82,12 +88,25 @@ for gain in ( 10, 5, 2, 1 ):
 		scope.set_sample_rate( sample_rate )
 
 		val1, val2 = read_avg( voltage_range, sample_rate )
-
-		print( i1+i2, (val1-o1), (val2-o2) )
+		#val1, val2 = ( 180, 190 )
+		g1 = val1 / 200
+		g2 = val2 / 200
+		g1  = int( g1 * 500 ) - 500 + 0x80
+		g2  = int( g2 * 500 ) - 500 + 0x80
+		gain[ i1 + i2 ] = g1
+		gain[ i1 + i2 + 1 ] = g2
+		print( i1+i2, g1, i1+i2+1, g2 )
 		
 		i2 += 8
 
 	i1 += 2
 
+eeprom = offset + gain
 
-scope.close_handle()
+print( eeprom, len( eeprom ) )
+
+# write values right after factory calibration
+# scope.write_eeprom( 40, eeprom )
+
+#scope.close_handle()
+
