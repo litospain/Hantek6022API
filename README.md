@@ -93,6 +93,18 @@ to bootstrap the scope for use. You can then write your own programs, or look at
     python examples/examples_libusb/scopevis.py
 
 
+## Create a calibration file for OpenHantek
+OpenHantek doesn't use the factory calibration values in eeprom but reads individual offset and gain values from a config file.
+    python examples/examples_libusb/calibrate.py
+This program guides you through the process. You have to apply several different voltages that are measured and compared to the expected gain settings.
+1. Apply 0 V. The Program reads the raw channel values and calculates the offset of both channels for the 4 gain settings x10, x5, x2, x1.
+2. Apply 0.4 V. The program measures the gain for range x10.
+3. Apply 0.8 V. The program measures the gain for range x5.
+4. Apply 2.0 V. The program measures the gain for range x2.
+5. Apply 4.0 V. The program measures the gain for range x10.
+6. The program writes a config file that can be copied into ~/.config/OpenHantek.
+
+
 ## TODO
 
  1. Clean up library, apply good formatting.
