@@ -8,7 +8,7 @@ and focusses mainly on Hantek6022BE under Linux (development system: debian bust
 
 __Hantek6022BE custom firmware is now feature complete and usable for https://github.com/Ho-Ro/openhantek__
 
-__Hantek6022BL custom firmware is not tested - USE WITH CARE!__
+__Hantek6022BL custom firmware is working but not as intensively tested as the BE version__
 
 <img alt="Scope Visualisation Example" width="100%" src="docs/images/HT6022BEBuiltInOscillator.png">
 
