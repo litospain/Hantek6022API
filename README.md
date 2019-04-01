@@ -36,6 +36,33 @@ with this inexpensive USB scope. :)
 
 If you have you have your own examples or have seen this library used, please let me know so I can add the examples here.
 
+## Create a calibration file for OpenHantek
+As you can see in the trace above the scope has a quite big zero point error (the measured real signal switches between 0.0 V and 2.0 V) - also the gain is defined by resistors with 5% tolerance in the frontend - in best case by two resistors R27/17 & R31/21 in the chain (x1), in worst case by four resistors R27/17 & R31/21 & R32/23 & R18/19/22 in the chain (x2, x5, x10). 
+
+-> https://github.com/Ho-Ro/Hantek6022API/blob/master/hardware/6022BE_Frontend_with_pinout.jpg 
+
+In the end you can have a statistical gain tolerance of about 7%...10% -> RSS analysis (root sum square, square all tolerances, sum them up und calculate the root of this sum) gives an expected tolerance range:
+
+- sqrt( 2 * (5%)² ) = 1.4 * 5% = 7% for gain step x1
+- sqrt( 4 * (5%)² ) = 2 * 5% = 10% for all other gains
+
+To reduce this effect OpenHantek uses individual correction values. It doesn't use the factory calibration values in eeprom (only offset is stored) but reads individual offset and gain values from a config file for the four gain steps of both channels. 
+To calibrate you have to apply a well known voltage (setpoint) and compare it with the actual value that is read by the scope. This file can be created by hand but also automatically:
+
+    python examples/examples_libusb/calibrate.py
+
+This program guides you through the process. 
+You have to apply several different voltages to both inputs that are measured and compared against the expected gain settings:
+
+1. Apply 0 V. The Program reads the raw channel values and calculates all offset values
+2. Apply 0.4 V. The program measures the gain for range x10
+3. Apply 0.8 V. The program measures the gain for range x5
+4. Apply 2.0 V. The program measures the gain for range x2
+5. Apply 4.0 V. The program measures the gain for range x1
+6. The program writes a config file `modelDSO6022.conf`
+
+This config file can be copied into directory `~/.config/OpenHantek`. On every startup OpenHantek reads this file and applies the calibratipon accordingly.
+
 ## Now with Linux support
 
 If you're on Linux, you're also in luck. Provided are some reverse engineered binding for libusb to operate this 
@@ -91,18 +118,6 @@ With the device plugged in, run the flashfirmware.py example,
 to bootstrap the scope for use. You can then write your own programs, or look at the current channel 1 scope trace via
 
     python examples/examples_libusb/scopevis.py
-
-
-## Create a calibration file for OpenHantek
-OpenHantek doesn't use the factory calibration values in eeprom but reads individual offset and gain values from a config file.
-    python examples/examples_libusb/calibrate.py
-This program guides you through the process. You have to apply several different voltages that are measured and compared to the expected gain settings.
-1. Apply 0 V. The Program reads the raw channel values and calculates the offset of both channels for the 4 gain settings x10, x5, x2, x1.
-2. Apply 0.4 V. The program measures the gain for range x10.
-3. Apply 0.8 V. The program measures the gain for range x5.
-4. Apply 2.0 V. The program measures the gain for range x2.
-5. Apply 4.0 V. The program measures the gain for range x10.
-6. The program writes a config file that can be copied into ~/.config/OpenHantek.
 
 
 ## TODO
