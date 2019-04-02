@@ -277,14 +277,14 @@ class Oscilloscope(object):
             return "\n".join(lines)
 
 
-    def get_calibration_values(self, timeout=0):
+    def get_calibration_values(self, size=32, timeout=0):
         """
         Retrieve the current calibration values from the oscilloscope.
         :param timeout: (OPTIONAL) A timeout for the transfer. Default: 0 (No timeout)
-        :return: A 32 single byte int list of calibration values, if successful.
+        :return: A size size single byte int list of calibration values, if successful.
                  May assert or raise various libusb errors if something went wrong.
         """
-        return array.array('B', self.read_eeprom(self.CALIBRATION_EEPROM_OFFSET, 32, timeout=timeout))
+        return array.array('B', self.read_eeprom(self.CALIBRATION_EEPROM_OFFSET, size, timeout=timeout))
 
 
     def set_calibration_values(self, cal_list, timeout=0):
@@ -294,7 +294,7 @@ class Oscilloscope(object):
         :param timeout: (OPTIONAL) A timeout for the transfer. Default: 0 (No timeout)
         :return: True if successful. May assert or raise various libusb errors if something went wrong.
         """
-        cal_list = cal_list if isinstance(cal_list, basestring) else array.array('c', cal_list).tostring()
+        cal_list = cal_list if isinstance(cal_list, bytearray) else array.array('B', cal_list).tostring()
         return self.write_eeprom(self.CALIBRATION_EEPROM_OFFSET, cal_list, timeout=timeout)
 
 
