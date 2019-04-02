@@ -34,7 +34,8 @@ instead of the Hantek version in order to get better performance from the device
 By default the Python reference library will load ***custom_BE*** (or ***custom_BL***) firmware into the device. 
 I took the sigrok branch and backported it to provide default Hantek VID/PID, 
 added eeprom access and created a ***custom_BL*** variant for 6022BL.
-[OpenHantek](https://github.com/Ho-Ro/openhantek) uses these firmware variants.
+The eeprom access allows to write persistent calibration values directly into the scope.
+[OpenHantek](https://github.com/Ho-Ro/openhantek) uses these firmware variants and and takes advantage of the calibration values.
  
 The ***custom*** firmware and the ***modded*** versions were originally written by 
 [jhoenicke](https://github.com/jhoenicke), to extract more performance out of the device. 
