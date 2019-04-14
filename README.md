@@ -49,15 +49,23 @@ In the end you can have a statistical gain tolerance of about 7%...10% -> RSS an
 To reduce this effect OpenHantek uses individual correction values:
 1. Offset and gain calibration are read from a calibration file `~/.config/OpenHantek/modelDSO6022.conf`
 2. If this file is not available offset and calibration will be read from eeprom.
+
 Step 2 uses the factory offset calibration values in eeprom.
-Out of the box only offset values are contained in eeprom, the program `calibrate.py` stores also gain calibration.
-To calibrate you have to apply a well known voltage (setpoint) and compare it with the actual value that is read by the scope. 
-This file can be created by hand but also automatically:
+Out of the box only offset values are contained in eeprom,
+the simple program `cal_zero.py` allows to update these values in case the offset has changed over time.
+Apply 0 V to both inputs (e.g. connect both probes to the GND calibration connector) and execute:
+
+    python examples/examples_libusb/cal_zero.py
+
+The more complex program `calibrate.py` measures and stores also gain calibration.
+To calibrate gain you have to apply a well known voltage (setpoint)
+and compare it with the actual value that is read by the scope:
 
     python examples/examples_libusb/calibrate.py
 
-This program guides you through the process. 
-You have to apply several different voltages to both inputs that are measured and compared against the expected gain settings:
+This program guides you through the process.
+You have to apply several different voltages to both input,
+the program measures and compares them against the expected gain settings:
 
 1. Apply 0 V. The Program reads the raw channel values and calculates all offset values
 2. Apply 0.4 V. The program measures the gain for range x10
@@ -93,7 +101,7 @@ little device. You may wish to first add 60-hantek-6022-usb.rules to your udev r
 
 After you've done this, the scope should automatically come up with the correct permissions to be accessed without a
 root user.
-    
+
 The following instructions are tested with Debian (Stretch and Buster) and are executed also automatically under Ubuntu (1804) - have a look at the [appveyor build status](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) and the [related config file](https://github.com/Ho-Ro/Hantek6022API/blob/master/appveyor.yml).
 
 To compile the custom firmware you have to install (as root) the _small devices c compiler_ sdcc:
