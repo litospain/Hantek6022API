@@ -1,21 +1,23 @@
 # Hantek6022API
 
-[![Build status](https://ci.appveyor.com/api/projects/status/github/Ho-Ro/Hantek6022API?branch=master&svg=true)](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master) [![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
+[![Build status](https://ci.appveyor.com/api/projects/status/github/Ho-Ro/Hantek6022API?branch=master&svg=true)](https://ci.appveyor.com/project/Ho-Ro/Hantek6022API/branch/master)
+[![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
 
 This repo is based on the excellent work of [Robert](https://github.com/rpcope1/Hantek6022API) 
 and [Jochen](https://github.com/jhoenicke/Hantek6022API) 
-and focusses mainly on Hantek6022BE under Linux (development system: debian buster).
+and focusses mainly on Hantek6022BE/BL under Linux (development system: debian buster).
 
-__Hantek6022BE custom firmware is now feature complete and usable for https://github.com/Ho-Ro/openhantek__
+__Hantek6022BE custom firmware is feature complete and usable for https://github.com/OpenHantek/OpenHantek6022__
 
-__Hantek6022BL custom firmware is working but not as intensively tested as the BE version__
+__Hantek6022BL custom firmware is feature complete but not as intensively tested as the BE version__
 
 <img alt="Scope Visualisation Example" width="100%" src="docs/images/HT6022BEBuiltInOscillator.png">
 
-Hantek 6022BE Python API for Windows and Linux. This is a API for Python via ctypes for Hantek's SDK for the 
-ultra-cheap,  reasonably usable (and hackable) 6022BE DSO, with a libusb implementation via libusb1 for Linux. 
+
+Hantek 6022 Python API for Windows and Linux. This is a API for Python via ctypes for Hantek's SDK for the
+ultra-cheap, reasonably usable (and hackable) 6022 DSO, with a libusb implementation via libusb1 for Linux.
 I was tired of using the silly Chinese software that came with this DSO, so I decided to write an API so I could run
-the scope through Python. 
+the scope through Python.
 
 The scope can be accessed by instantiating an oscilloscope object with the correct scopeid (always 0 for one scope
 attached). Things like voltage divisions and sampling rates can be set by the appropriate methods. As I finish developing
@@ -148,17 +150,14 @@ to bootstrap the scope for use. You can then write your own programs, or look at
 
     python examples/examples_libusb/scopevis.py
 
-
 ## TODO
 
  1. Clean up library, apply good formatting.
  2. Clean up unit tests.
  3. Add more examples.
- 4. Test 6022BL firmware (difficult due to missing hw info and missing device).
 
 One excellent ultimate goal for this would to make it play nice with cheap ARM SBCs like the Raspberry Pi, such that
 this could be used as a quick and dirty DAQ for many interesting systems.
-
 
 For additional (interesting) details, the inquisitive reader should take two or three hours and read:
 http://www.eevblog.com/forum/testgear/hantek-6022be-20mhz-usb-dso/ 
