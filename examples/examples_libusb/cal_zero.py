@@ -1,19 +1,15 @@
 #!/usr/bin/python3
 
-__author__ = 'Martin Homuth-Rosemann'
+'''
+Program to calibrate offset of 6022BE/BL
+1.) Measure offset at low and high speed for the four gain steps x10, x5, x2, x1
+2.) Write offset values into eeprom
+'''
 
 from PyHT6022.LibUsbScope import Oscilloscope
 import sys
 import time
 import binascii
-
-
-'''
-Program to calibrate offset and gain of 6022BE/BL
-1.) Measure offset for the four gain steps x10, x5, x2, x1.
-2. - 5.) Apply test voltages and measure the gain for the four gain steps
-6.) Write a config file
-'''
 
 
 # average over 100ms @ 100kS/s -> 5 cycles @ 50 Hz or 6 cycles @ 60 Hz to cancel AC hum
@@ -63,8 +59,6 @@ scope.supports_single_channel = True
 
 scope.set_num_channels( 2 )
 
-# mV/div ranges
-V_div = ( 20, 50, 100, 200, 500, 1000, 2000, 5000 )
 # corresponding amplifier gain settings
 gains = ( 10, 10,  10,   5,   2,    1,    1,    1 )
 # available amplifier gains
@@ -85,7 +79,7 @@ offhi2 = {}
 
 for gain in gainSteps:
 	# average 10 times over 100 ms (cancel 50 Hz / 60 Hz)
-	print( "Measure normal offset for gain ", gain )
+	print( "Measure offset at low speed for gain ", gain )
 	raw1, raw2 = read_avg( gain, 10, 10 )
 	offset1[ gain ] = 0x80 - raw1
 	offset2[ gain ] = 0x80 - raw2
@@ -96,9 +90,7 @@ for gain in gainSteps:
 
 ee_offset = bytearray( 32 )
 
-for index in range( len( gains ) ):
-	gainID = gains[ index ]
-	voltID = V_div[ index ]
+for index, gainID in enumerate( gains ):
 	# prepare eeprom content
 	ee_offset[ 2 * index ] = 0x80 - offset1[ gainID ]
 	ee_offset[ 2 * index + 1 ] = 0x80 - offset2[ gainID ]

@@ -18,4 +18,3 @@ scope.open_handle()
 scope.set_sample_rate(sample_rate_index)
 scope.set_ch1_voltage_range(voltage_range)
 print( scope.set_calibration_frequency( cal_freq ) )
-

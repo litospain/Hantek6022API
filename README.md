@@ -7,25 +7,20 @@ This repo is based on the excellent work of [Robert](https://github.com/rpcope1/
 and [Jochen](https://github.com/jhoenicke/Hantek6022API) 
 and focusses mainly on Hantek6022BE/BL under Linux (development system: debian buster).
 
-__Hantek6022BE custom firmware is feature complete and usable for https://github.com/OpenHantek/OpenHantek6022__
+__Hantek6022BE custom firmware is feature complete and usable for [OpenHantek6022](https://github.com/OpenHantek/OpenHantek6022)__
 
 __Hantek6022BL custom firmware is feature complete but not as intensively tested as the BE version__
 
 <img alt="Scope Visualisation Example" width="100%" src="docs/images/HT6022BEBuiltInOscillator.png">
 
 
-Hantek 6022 Python API for Windows and Linux. This is a API for Python via ctypes for Hantek's SDK for the
+Hantek 6022 Python API for Linux. This is a API for Python for the
 ultra-cheap, reasonably usable (and hackable) 6022 DSO, with a libusb implementation via libusb1 for Linux.
-I was tired of using the silly Chinese software that came with this DSO, so I decided to write an API so I could run
-the scope through Python.
 
 The scope can be accessed by instantiating an oscilloscope object with the correct scopeid (always 0 for one scope
 attached). Things like voltage divisions and sampling rates can be set by the appropriate methods. As I finish developing
 this, I will include documentation. Each method has some documentation as to what it does currently though, and hopefully
 variable names are clear enough to give you some idea what they are for. 
-
-(Also, the provided DLLs that access the scope belong to Hantek, not me. They are provided simply for ease of access and
-are probably NOT covered by the GPL!)
 
 ## Neat things you can do
 
@@ -39,6 +34,7 @@ with this inexpensive USB scope. :)
 If you have you have your own examples or have seen this library used, please let me know so I can add the examples here.
 
 ## Create calibration values for OpenHantek
+
 As you can see in the trace above the scope has a quite big zero point error (the measured real signal switches between 0.0 V and 2.0 V) - also the gain is defined by resistors with 5% tolerance in the frontend - in best case by two resistors R27/17 & R31/21 in the chain (x1), in worst case by four resistors R27/17 & R31/21 & R32/23 & R18/19/22 in the chain (x2, x5, x10). 
 
 -> https://github.com/Ho-Ro/Hantek6022API/blob/master/hardware/6022BE_Frontend_with_pinout.jpg 

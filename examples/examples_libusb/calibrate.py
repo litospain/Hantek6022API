@@ -1,19 +1,17 @@
 #!/usr/bin/python3
 
-__author__ = 'Robert Cope'
+'''
+Program to calibrate offset and gain of 6022BE/BL
+1.) Measure offset at low and high speed for the four gain steps x10, x5, x2, x1
+2. - 5.) Apply test voltages and measure the gain for the four gain steps
+6.) Write a config file
+7.) Write data into eeprom
+'''
 
 from PyHT6022.LibUsbScope import Oscilloscope
 import sys
 import time
 import binascii
-
-
-'''
-Program to calibrate offset and gain of 6022BE/BL
-1.) Measure offset for the four gain steps x10, x5, x2, x1.
-2. - 5.) Apply test voltages and measure the gain for the four gain steps
-6.) Write a config file
-'''
 
 
 # average over 100ms @ 100kS/s -> 5 cycles @ 50 Hz or 6 cycles @ 60 Hz to cancel AC hum
@@ -85,7 +83,7 @@ offhi2 = {}
 
 for gain in gainSteps:
 	# average 10 times over 100 ms (cancel 50 Hz / 60 Hz)
-	print( "Measure normal offset for gain ", gain )
+	print( "Measure offset at low speed for gain ", gain )
 	raw1, raw2 = read_avg( gain, 10, 10 )
 	offset1[ gain ] = 0x80 - raw1
 	offset2[ gain ] = 0x80 - raw2
@@ -104,8 +102,7 @@ config.write( ";OpenHantek calibration file for DSO6022\n;Created by tool 'calib
 
 config.write( "[offset]\n" )
 
-for index in range( len( gains ) ):
-	gainID = gains[ index ]
+for index, gainID in enumerate( gains ):
 	voltID = V_div[ index ]
 	config.write( "ch0\\%dmV=%d\n" % ( voltID, offset1[ gainID ] ) )
 	config.write( "ch1\\%dmV=%d\n" % ( voltID, offset2[ gainID ] ) )
@@ -130,14 +127,13 @@ gain2 = {}
 index = 0 # index for gain error due to nominal resistor values
 for gain in gainSteps:
 	voltage = 4 / gain
-	set = input( "Apply %4.2f V to both channels and press <ENTER> " % voltage )
+	setpoint = input( "Apply %4.2f V to both channels and press <ENTER> " % voltage )
 	try:
-		set = float( set ) # did the user supply an own voltage setting?
+		setpoint = float( setpoint ) # did the user supply an own voltage setting?
 	except ValueError:
-		set = voltage # else assume the proposed value 'voltage'
-	# print( voltage/set )
+		setpoint = voltage # else assume the proposed value 'voltage'
 	# we expect value 'target'
-	target = error[ index ] * 100 * set / voltage
+	target = error[ index ] * 100 * setpoint / voltage
 	index += 1
 	# get offset error for gain setting & channel
 	off1 = offset1[ gain ]
@@ -164,8 +160,7 @@ ee_gain = bytearray( 16 )
 
 config.write( "\n[gain]\n" )
 
-for index in range( len( gains ) ):
-	gainID = gains[ index ]
+for index, gainID in enumerate( gains ):
 	voltID = V_div[ index ]
 	g1 = gain1[ gainID ]
 	g2 = gain2[ gainID ]
@@ -184,7 +179,4 @@ scope.set_calibration_values( ee_offset + ee_gain )
 scope.close_handle()
 
 print( "\nReady, now install the configuration file '%s' into directory '~/.config/OpenHantek'\n" % configfile )
-
-
-
 

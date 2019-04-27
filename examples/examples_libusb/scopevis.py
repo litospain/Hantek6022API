@@ -16,7 +16,7 @@ def apply_data_smoothing(data, window=1):
 
 sample_rate_index = 1
 voltage_range = 0x01
-cal_freq = 10;
+cal_freq = 10
 
 # skip first samples due to unstable xfer
 skip = 2 * 0x400 
