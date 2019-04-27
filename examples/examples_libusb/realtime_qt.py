@@ -42,10 +42,10 @@ scope.open_handle()
 if (not scope.is_device_firmware_present):
 	scope.flash_firmware()
 else:
-	scope.supports_single_channel = True;
+	scope.supports_single_channel = True
 print("Setting up scope!")
 
-#scope.set_interface(alternative);
+#scope.set_interface(alternative)
 print("ISO" if scope.is_iso else "BULK", "packet size:", scope.packetsize)
 scope.set_num_channels(numchannels)
 # set voltage range
@@ -164,14 +164,14 @@ curve_min_max_diff = p2.plot(np.array([]))
 
 def update():
 	global curve_min, curve_max, curve_min_max_diff
-	MAX_BLOCKS_KEPT = 50;
+	MAX_BLOCKS_KEPT = 50
 	t1 = time.time()
 	if len(data) > MAX_BLOCKS_KEPT:
-		print("too much data:",len(data));
+		print("too much data:",len(data))
 		data_lock.acquire()
 		try:
 			del(data[:(len(data) - MAX_BLOCKS_KEPT)])
-			print("too much data after clearing:",len(data));
+			print("too much data after clearing:",len(data))
 		finally:
 			data_lock.release()
 

@@ -179,4 +179,3 @@ scope.set_calibration_values( ee_offset + ee_gain )
 scope.close_handle()
 
 print( "\nReady, now install the configuration file '%s' into directory '~/.config/OpenHantek'\n" % configfile )
-

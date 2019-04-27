@@ -44,4 +44,3 @@ mod_firmware_iso = fx2_ihex_to_control_packets(os.path.join(base_path, 'modded',
 custom_firmware_BE = fx2_ihex_to_control_packets(os.path.join(base_path, 'custom_BE', 'dso6022be-firmware.hex'))
 custom_firmware_BL = fx2_ihex_to_control_packets(os.path.join(base_path, 'custom_BL', 'dso6022bl-firmware.hex'))
 default_firmware = custom_firmware = custom_firmware_BE
-
