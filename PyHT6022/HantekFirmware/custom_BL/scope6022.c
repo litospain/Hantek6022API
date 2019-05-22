@@ -61,8 +61,8 @@ static const struct samplerate_info samplerates[] = {
 
 /*
  * This sets three bits for each channel, one channel at a time.
- * For channel 0 we want to set bits 1, 2 & 3
- * For channel 1 we want to set bits 4, 5 & 6
+ * For channel 0 we want to set bits 1, 2 & 3 ( ....XXX. => mask 0x0e )
+ * For channel 1 we want to set bits 4, 5 & 6 ( .XXX.... => mask 0x70 )
  *
  * We convert the input values that are strange due to original
  * firmware code into the value of the three bits as follows:
