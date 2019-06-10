@@ -13,7 +13,7 @@ import binascii
 
 
 # average over 100ms @ 100kS/s -> 5 cycles @ 50 Hz or 6 cycles @ 60 Hz to cancel AC hum
-def read_avg( voltage_range, sample_rate=10, repeat = 1, samples = 12 * 1024 ):
+def read_avg( voltage_range, sample_rate=110, repeat = 1, samples = 12 * 1024 ):
 	scope.set_sample_rate( sample_rate )
 	scope.set_ch1_voltage_range(voltage_range)
 	scope.set_ch2_voltage_range(voltage_range)
@@ -80,7 +80,7 @@ offhi2 = {}
 for gain in gainSteps:
 	# average 10 times over 100 ms (cancel 50 Hz / 60 Hz)
 	print( "Measure offset at low speed for gain ", gain )
-	raw1, raw2 = read_avg( gain, 10, 10 )
+	raw1, raw2 = read_avg( gain, 110, 10 )
 	offset1[ gain ] = 0x80 - raw1
 	offset2[ gain ] = 0x80 - raw2
 	print( "Measure offset at high speed for gain ", gain )

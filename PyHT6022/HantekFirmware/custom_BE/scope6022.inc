@@ -227,6 +227,57 @@ static void select_interface(BYTE alt)
 }
 
 
+// struct samplerate_info{ rate, wait0, wait1, opc0, opc1, out0, ifcfg };
+// rate -> ID 
+// wait0, wait1, opc0, opc1, out0 -> GPIF waveform registers
+// ifcfg -> IFCONFIG register (TRM 15.5.2)
+//
+// IFCONFIG.7 : IFCLKSRC, 0: ext, 1: int (30/48 MHz)
+// IFCONFIG.6 : 3048MHZ, 0: 30MHz, 1: 48MHz
+// IFCONFIG.5 : IFCLKOE, 0: tri-state, 1: drive
+// IFCONFIG.4 : IFCLKPOL, 0: normal polarity, 1: inverted
+// IFCONFIG.3 : ASYNC, 0: synchronously, clock supplied to IFCLK pin, 1: asynchronously, FIFO provides r/w strobes
+// IFCONFIG.2 : GSTATE, 1: PE.[10] = GSTATE.[10]
+// IFCONFIG.[10] : 00: ports, 01: reserved, 10: GPIF (internal) master, 11: slave FIFO (external master)
+//
+
+#define IFCLK48 0xca
+#define IFCLK30 0x8a
+
+#if 1
+static const struct samplerate_info samplerates[] = {
+	{  48, 0x80,   0, 3, 0, 0x00, 0xea },
+	{  30, 0x80,   0, 3, 0, 0x00, 0xaa },
+	{  24,    1,   0, 2, 1, OUT0, IFCLK48 },
+	{  15,    1,   0, 2, 1, OUT0, IFCLK30 },
+	{  12,    2,   1, 2, 0, OUT0, IFCLK48 },
+	{  10,    1,   1, 2, 0, OUT0, IFCLK30 },
+	{   5,    3,   2, 2, 0, OUT0, IFCLK30 },
+	{   2,    7,   7, 2, 0, OUT0, IFCLK30 },
+	{   1,   15,  14, 2, 0, OUT0, IFCLK30 },
+	{ 150,   30,  29, 2, 0, OUT0, IFCLK30 },
+	{ 120,   75,  74, 2, 0, OUT0, IFCLK30 },
+	{ 110,  150, 149, 2, 0, OUT0, IFCLK30 },
+	{ 106,  250, 249, 2, 0, OUT0, IFCLK30 }
+};
+#else
+static const struct samplerate_info samplerates[] = {
+	{  48, 0x80,   0, 3, 0, 0x00, 0xea },
+	{  30, 0x80,   0, 3, 0, 0x00, 0xaa },
+	{  24,    1,   0, 2, 1, OUT0, 0xca },
+	{  16,    1,   1, 2, 0, OUT0, 0xca },
+	{  12,    2,   1, 2, 0, OUT0, 0xca },
+	{   8,    3,   2, 2, 0, OUT0, 0xca },
+	{   4,    6,   5, 2, 0, OUT0, 0xca },
+	{   2,   12,  11, 2, 0, OUT0, 0xca },
+	{   1,   24,  23, 2, 0, OUT0, 0xca },
+	{  50,   48,  47, 2, 0, OUT0, 0xca },
+	{  20,  120, 119, 2, 0, OUT0, 0xca },
+	{  10,  240, 239, 2, 0, OUT0, 0xca }
+};
+#endif
+
+
 static BOOL set_samplerate(BYTE rate)
 {
 	BYTE i = 0;

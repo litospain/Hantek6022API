@@ -19,7 +19,7 @@
 
 VID = 0xB504	; Manufacturer ID (0x04B5)
 PID = 0x2A60	; Product ID (0x602A) = 6022BL
-VER = 0x0002	; FW version 0x0200
+VER = 0x0102	; FW version 0x0201
 
 
 .include "../../custom_BE/descriptor.inc"

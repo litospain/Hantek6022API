@@ -44,6 +44,7 @@
 
 #define OUT0 ((1 << CTL_BIT) << 4) /* OEx = 1, CTLx = 0 */
 
+#if 0
 static const struct samplerate_info samplerates[] = {
 	{ 48, 0x80,   0, 3, 0, 0x00, 0xea },
 	{ 30, 0x80,   0, 3, 0, 0x00, 0xaa },
@@ -58,6 +59,7 @@ static const struct samplerate_info samplerates[] = {
 	{ 20,  120, 119, 2, 0, OUT0, 0xca },
 	{ 10,  240, 239, 2, 0, OUT0, 0xca },
 };
+#endif
 
 /*
  * This sets three bits for each channel, one channel at a time.

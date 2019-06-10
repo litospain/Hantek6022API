@@ -602,18 +602,19 @@ class Oscilloscope(object):
         returns.
         :param rate_index: The rate_index. These are the keys for the SAMPLE_RATES dict for the Oscilloscope object.
                            Common rate_index values and actual sample rate per channel:
-                           10 <-> 100 KS/s
-                           20 <-> 200 KS/s
-                           50 <-> 500 KS/s
-                            1 <-> 1 MS/s
-                            2 <-> 2 MS/s
-                            4 <-> 4 MS/s
-                            8 <-> 8 MS/s
-                           12 <-> 12 MS/s
-                           16 <-> 16 MS/s
-                           24 <-> 24 MS/s
-                           30 <-> 30 MS/s
-                           48 <-> 48 MS/s
+                           106 <->  60 kS/s
+                           110 <-> 100 kS/s
+                           120 <-> 200 kS/s
+                           150 <-> 500 kS/s
+                             1 <->   1 MS/s
+                             2 <->   2 MS/s
+                             5 <->   5 MS/s
+                            10 <->  10 MS/s
+                            12 <->  12 MS/s
+                            15 <->  15 MS/s
+                            24 <->  24 MS/s
+                            30 <->  30 MS/s
+                            48 <->  48 MS/s
 
                            Other values are not supported.
         :param timeout:
