@@ -608,10 +608,15 @@ class Oscilloscope(object):
                            150 <-> 500 kS/s
                              1 <->   1 MS/s
                              2 <->   2 MS/s
+                             3 <->   3 MS/s
+                             4 <->   4 MS/s
                              5 <->   5 MS/s
+                             6 <->   6 MS/s
+                             8 <->   8 MS/s
                             10 <->  10 MS/s
                             12 <->  12 MS/s
                             15 <->  15 MS/s
+                            16 <->  16 MS/s
                             24 <->  24 MS/s
                             30 <->  30 MS/s
                             48 <->  48 MS/s

@@ -241,39 +241,46 @@ static void select_interface(BYTE alt)
 // IFCONFIG.[10] : 00: ports, 01: reserved, 10: GPIF (internal) master, 11: slave FIFO (external master)
 //
 
+#define FULL48 0xea
+#define FULL30 0xaa
 #define IFCLK48 0xca
 #define IFCLK30 0x8a
 
-#if 1
 static const struct samplerate_info samplerates[] = {
-	{  48, 0x80,   0, 3, 0, 0x00, 0xea },
-	{  30, 0x80,   0, 3, 0, 0x00, 0xaa },
-	{  24,    1,   0, 2, 1, OUT0, IFCLK48 },
-	{  15,    1,   0, 2, 1, OUT0, IFCLK30 },
-	{  12,    2,   1, 2, 0, OUT0, IFCLK48 },
-	{  10,    1,   1, 2, 0, OUT0, IFCLK30 },
-	{   5,    3,   2, 2, 0, OUT0, IFCLK30 },
-	{   2,    7,   7, 2, 0, OUT0, IFCLK30 },
-	{   1,   15,  14, 2, 0, OUT0, IFCLK30 },
-	{ 150,   30,  29, 2, 0, OUT0, IFCLK30 },
-	{ 120,   75,  74, 2, 0, OUT0, IFCLK30 },
-	{ 110,  150, 149, 2, 0, OUT0, IFCLK30 },
-	{ 106,  250, 249, 2, 0, OUT0, IFCLK30 }
+	{  48, 0x80,   0, 3, 0, 0x00, FULL48 },  // 48
+	{  30, 0x80,   0, 3, 0, 0x00, FULL30 },  // 30
+	{  24,    1,   0, 2, 1, OUT0, IFCLK48 }, // 48 / 2
+	{  16,    1,   1, 2, 0, OUT0, IFCLK48 }, // 48 / 3
+	{  15,    1,   0, 2, 1, OUT0, IFCLK30 }, // 30 / 2
+	{  12,    2,   1, 2, 0, OUT0, IFCLK48 }, // 48 / 4
+	{  10,    1,   1, 2, 0, OUT0, IFCLK30 }, // 30 / 3
+	{   8,    3,   2, 2, 0, OUT0, IFCLK48 }, // 48 / 6
+	{   6,    2,   2, 2, 0, OUT0, IFCLK30 }, // 30 / 5
+	{   5,    3,   2, 2, 0, OUT0, IFCLK30 }, // 30 / 6
+	{   4,    6,   5, 2, 0, OUT0, IFCLK48 }, // 48 / 12
+	{   3,    5,   4, 2, 0, OUT0, IFCLK30 }, // 30 / 10
+	{   2,    7,   7, 2, 0, OUT0, IFCLK30 }, // 30 / 15
+	{   1,   15,  14, 2, 0, OUT0, IFCLK30 }, // 30 / 30
+	{ 150,   30,  29, 2, 0, OUT0, IFCLK30 }, // 30 / 60
+	{ 120,   75,  74, 2, 0, OUT0, IFCLK30 }, // 30 / 150
+	{ 110,  150, 149, 2, 0, OUT0, IFCLK30 }, // 30 / 300
+	{ 106,  250, 249, 2, 0, OUT0, IFCLK30 }  // 30 / 500
 };
-#else
+
+#if 0 // FW0200 sample rates
 static const struct samplerate_info samplerates[] = {
-	{  48, 0x80,   0, 3, 0, 0x00, 0xea },
-	{  30, 0x80,   0, 3, 0, 0x00, 0xaa },
-	{  24,    1,   0, 2, 1, OUT0, 0xca },
-	{  16,    1,   1, 2, 0, OUT0, 0xca },
-	{  12,    2,   1, 2, 0, OUT0, 0xca },
-	{   8,    3,   2, 2, 0, OUT0, 0xca },
-	{   4,    6,   5, 2, 0, OUT0, 0xca },
-	{   2,   12,  11, 2, 0, OUT0, 0xca },
-	{   1,   24,  23, 2, 0, OUT0, 0xca },
-	{  50,   48,  47, 2, 0, OUT0, 0xca },
-	{  20,  120, 119, 2, 0, OUT0, 0xca },
-	{  10,  240, 239, 2, 0, OUT0, 0xca }
+	{  48, 0x80,   0, 3, 0, 0x00, FULL48 },
+	{  30, 0x80,   0, 3, 0, 0x00, FULL30 },
+	{  24,    1,   0, 2, 1, OUT0, IFCLK48 },
+	{  16,    1,   1, 2, 0, OUT0, IFCLK48 },
+	{  12,    2,   1, 2, 0, OUT0, IFCLK48 },
+	{   8,    3,   2, 2, 0, OUT0, IFCLK48 },
+	{   4,    6,   5, 2, 0, OUT0, IFCLK48 },
+	{   2,   12,  11, 2, 0, OUT0, IFCLK48 },
+	{   1,   24,  23, 2, 0, OUT0, IFCLK48 },
+	{  50,   48,  47, 2, 0, OUT0, IFCLK48 },
+	{  20,  120, 119, 2, 0, OUT0, IFCLK48 },
+	{  10,  240, 239, 2, 0, OUT0, IFCLK48 }
 };
 #endif
 

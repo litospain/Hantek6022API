@@ -13,8 +13,13 @@ commands map as follows:
 |----------------------|----------------|------------------------------------------------------------------------|
 | Set CH0 voltage range|      0xE0      | Possible values: 1,2,5,10 (5V, 2.5V, 1V, 500mV).                       |
 | Set CH1 voltage range|      0xE1      | Possible values: 1,2,5,10 (5V, 2.5V, 1V, 500mV).                       |
-| Set Sampling Rate    |      0xE2      | Possible values: 48, 30, 24, 16, 8, 4, 1 (MHz) and 50,20,10 (*10kHz).  |
+| Set Sampling Rate    |      0xE2      | Possible values:                                                       |
+|                      |                |   48, 30, 24, 16, 15, 12, 10, 8, 6, 5, 4, 3, 2, 1 (MHz)                |
+|                      |                |   and 150,120,110 (500, 200, 100 kHz).                                 |
 | Trigger Oscilloscope |      0xE3      | Clear the FIFO on the FX2LP                                            |
+| Set Channel Number   |      0xE4      | Possible values: 1, 2                                                  |
+| Set Calibration Out  |      0xE6      | Possible values: 100, 50, 20, 10, 5, 2, 1 (kHz)                        |
+|                      |                | and 150, 120, 110, 105 ( 500, 200, 100, 50 Hz)                         |
 | Read/Write EEPROM    |      0xA2      | Read or write the eeprom built into the scope.                         |
 | Read/Write Firmware  |      0xA0      | Read or write the scope firmware. Must be done on scope initialization |
 

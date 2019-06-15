@@ -21,7 +21,7 @@ ultra-cheap, reasonably usable (and hackable) 6022 DSO, with a libusb implementa
 The scope can be accessed by instantiating an oscilloscope object with the correct scopeid (always 0 for one scope
 attached). Things like voltage divisions and sampling rates can be set by the appropriate methods. As I finish developing
 this, I will include documentation. Each method has some documentation as to what it does currently though, and hopefully
-variable names are clear enough to give you some idea what they are for. 
+variable names are clear enough to give you some idea what they are for.
 
 ## Neat things you can do
 
