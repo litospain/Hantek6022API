@@ -26,18 +26,29 @@
 #include <i2c.h>
 #include <eputils.h>
 
-#define SET_ANALOG_MODE() do { PA7 = 1; } while (0)
 
-#define SET_COUPLING(x)
+/* Port A and C will be set by the application program */
+#define INIT_PORTACFG 0
+#define INIT_PORTCCFG 0
+/* Set port E that a 6022 with AC/DC HW mod will start in DC mode like the original */
+#define INIT_PORTECFG 0x11
 
-#define SET_CALIBRATION_PULSE(x)
+/* set PORT A, C, E as output */
+#define INIT_OEA 0xFF
+#define INIT_OEC 0xFF
+#define INIT_OEE 0xFF
 
-#define TOGGLE_CALIBRATION_PIN() do { PC2 = !PC2; } while (0)
 
-#define LED_CLEAR() do { PC0 = 1; PC1 = 1; } while (0)
-#define LED_GREEN() do { PC0 = 1; PC1 = 0; } while (0)
-#define LED_RED()   do { PC0 = 0; PC1 = 1; } while (0)
-#define LED_RED_TOGGLE() do { PC0 = !PC0; PC1 = 1; } while (0)
+#define SET_ANALOG_MODE()		do { PA7 = 1; } while (0)
+
+#define SET_COUPLING(x)			do { set_coupling(x); } while (0)
+
+#define TOGGLE_CALIBRATION_PIN()	do { PC2 = !PC2; } while (0)
+
+#define LED_CLEAR()			do { PC0 = 1; PC1 = 1; } while (0)
+#define LED_GREEN()			do { PC0 = 1; PC1 = 0; } while (0)
+#define LED_RED()			do { PC0 = 0; PC1 = 1; } while (0)
+#define LED_RED_TOGGLE()		do { PC0 = !PC0; PC1 = 1; } while (0)
 
 /* CTLx pin index (IFCLK, ADC clock input). */
 #define CTL_BIT 0

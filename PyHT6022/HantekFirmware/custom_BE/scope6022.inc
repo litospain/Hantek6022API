@@ -100,7 +100,6 @@ void timer2_isr(void) __interrupt TF2_ISR
 }
 
 
-#if 0
 /**
  * Each LSB in the nibble of the byte controls the coupling per channel.
  *
@@ -119,7 +118,6 @@ static void set_coupling(BYTE coupling_cfg)
 	else
 		IOE &= ~0x01;
 }
-#endif
 
 
 void set_aadj() {
@@ -266,23 +264,6 @@ static const struct samplerate_info samplerates[] = {
 	{ 110,  150, 149, 2, 0, OUT0, IFCLK30 }, // 30 / 300
 	{ 106,  250, 249, 2, 0, OUT0, IFCLK30 }  // 30 / 500
 };
-
-#if 0 // FW0200 sample rates
-static const struct samplerate_info samplerates[] = {
-	{  48, 0x80,   0, 3, 0, 0x00, FULL48 },
-	{  30, 0x80,   0, 3, 0, 0x00, FULL30 },
-	{  24,    1,   0, 2, 1, OUT0, IFCLK48 },
-	{  16,    1,   1, 2, 0, OUT0, IFCLK48 },
-	{  12,    2,   1, 2, 0, OUT0, IFCLK48 },
-	{   8,    3,   2, 2, 0, OUT0, IFCLK48 },
-	{   4,    6,   5, 2, 0, OUT0, IFCLK48 },
-	{   2,   12,  11, 2, 0, OUT0, IFCLK48 },
-	{   1,   24,  23, 2, 0, OUT0, IFCLK48 },
-	{  50,   48,  47, 2, 0, OUT0, IFCLK48 },
-	{  20,  120, 119, 2, 0, OUT0, IFCLK48 },
-	{  10,  240, 239, 2, 0, OUT0, IFCLK48 }
-};
-#endif
 
 
 static BOOL set_samplerate(BYTE rate)
@@ -623,12 +604,14 @@ static void main(void)
 	// RENUMERATE();
 	// USBCS &= ~bmDISCON;
 
-	// PORTECFG = 0;
-	PORTCCFG = 0;
-	PORTACFG = 0;
-	// OEE = 0xff;
-	OEC = 0xff;
-	OEA = 0xff; 
+	/* Init the ports with values defined in the scopeXXXX.c files */
+	PORTECFG = INIT_PORTECFG;
+	PORTCCFG = INIT_PORTCCFG;
+	PORTACFG = INIT_PORTACFG;
+	OEE = INIT_OEE;
+	OEC = INIT_OEC;
+	OEA = INIT_OEA;
+
 	LED_RED();
 
 	while (TRUE) {
