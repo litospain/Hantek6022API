@@ -31,7 +31,7 @@
 #define INIT_PORTACFG 0
 #define INIT_PORTCCFG 0
 /* Set port E that a 6022 with AC/DC HW mod will start in DC mode like the original */
-#define INIT_PORTECFG 0x11
+#define INIT_PORTECFG 0x09
 
 /* set PORT A, C, E as output */
 #define INIT_OEA 0xFF
