@@ -27,6 +27,9 @@ pip-log.txt
 .tox
 nosetests.xml
 
+# Other test results
+model*.conf
+
 # Translations
 *.mo
 
@@ -41,6 +44,7 @@ nosetests.xml
 *.test
 *.new
 *.old
+*.diff
 
 # Debian
 doc-pak
