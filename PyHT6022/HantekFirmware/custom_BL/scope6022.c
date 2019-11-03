@@ -27,11 +27,15 @@
 #include <eputils.h>
 
 
-/* Port A and C will be set by the application program */
+/* A and C and E set to PORT */
 #define INIT_PORTACFG 0
 #define INIT_PORTCCFG 0
+#define INIT_PORTECFG 0
+
 /* Set port E that a 6022 with AC/DC HW mod will start in DC mode like the original */
-#define INIT_PORTECFG 0x09
+#define INIT_IOA 0x00
+#define INIT_IOC 0x00
+#define INIT_IOE 0x09
 
 /* set PORT A, C, E as output */
 #define INIT_OEA 0xFF
