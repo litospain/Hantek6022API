@@ -45,7 +45,16 @@ class Oscilloscope(object):
     SET_NUMCH_VALUE = 0x00
     SET_NUMCH_INDEX = 0x00
 
-    # DC / AC : 0xe5
+    SET_AC_DC_REQUEST = 0xe5
+    SET_AC_DC_VALUE = 0x00
+    SET_AC_DC_INDEX = 0x00
+
+    AC = 0
+    DC = 1
+    AC_AC = 0x00
+    AC_DC = 0x01
+    DC_AC = 0x10
+    DC_DC = 0x11
 
     SET_CAL_FREQ_REQUEST = 0xe6
     SET_CAL_FREQ_VALUE = 0x00
@@ -102,6 +111,7 @@ class Oscilloscope(object):
         self.is_iso = False
         self.packetsize = None
         self.num_channels = 2
+        self.ac_dc_status = 0x11
         self.scope_id = scope_id
 
 
@@ -756,3 +766,69 @@ class Oscilloscope(object):
         assert bytes_written == 0x01
         return True
 
+
+    def set_ch1_ch2_ac_dc(self, ac_dc, timeout=0):
+        """
+        set AC_DC status of both channels
+        :param ac_dc: the value to send:
+        0x00: CH2 AC, CH1 AC
+        0x01: CH2 AC, CH1 DC
+        0x10: CH2 DC, CH1 AC
+        0x11: CH2 DC, CH1 DC
+        :param timeout: (OPTIONAL).
+        :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
+        """
+        assert ac_dc == self.AC_AC or ac_dc == self.AC_DC or ac_dc == self.DC_AC or ac_dc == self.DC_DC
+        if not self.device_handle:
+            assert self.open_handle()
+        bytes_written = self.device_handle.controlWrite(0x40, self.SET_AC_DC_REQUEST,
+                                                        self.SET_AC_DC_VALUE,
+                                                        self.SET_AC_DC_INDEX,
+                                                        pack("B", ac_dc), timeout=timeout)
+        assert bytes_written == 0x01
+        self.ac_dc_status = ac_dc
+        return True
+
+
+    def set_ch1_ac_dc(self, ac_dc, timeout=0):
+        """
+        set AC_DC status of channel 1
+        :param ac_dc: the value to set:
+        0x00: AC
+        0x01: DC
+        :param timeout: (OPTIONAL).
+        :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
+        """
+        assert ac_dc == self.AC or ac_dc == self.DC
+        if not self.device_handle:
+            assert self.open_handle()
+        ac_dc_new = ( self.ac_dc_status & 0xF0 ) | ac_dc
+        bytes_written = self.device_handle.controlWrite(0x40, self.SET_AC_DC_REQUEST,
+                                                        self.SET_AC_DC_VALUE,
+                                                        self.SET_AC_DC_INDEX,
+                                                        pack("B", ac_dc_new), timeout=timeout)
+        assert bytes_written == 0x01
+        self.ac_dc_status = ac_dc_new # remember the latest status
+        return True
+
+
+    def set_ch2_ac_dc(self, ac_dc, timeout=0):
+        """
+        set AC_DC status of channel 2
+        :param ac_dc: the value to set:
+        0x00: AC
+        0x01: DC
+        :param timeout: (OPTIONAL).
+        :return: True if successful. This method may assert or raise various libusb errors if something went wrong.
+        """
+        assert ac_dc == self.AC or ac_dc == self.DC
+        if not self.device_handle:
+            assert self.open_handle()
+        ac_dc_new = ( self.ac_dc_status & 0x0F ) | ac_dc << 4
+        bytes_written = self.device_handle.controlWrite(0x40, self.SET_AC_DC_REQUEST,
+                                                        self.SET_AC_DC_VALUE,
+                                                        self.SET_AC_DC_INDEX,
+                                                        pack("B", ac_dc_new), timeout=timeout)
+        assert bytes_written == 0x01
+        self.ac_dc_status = ac_dc_new # remember the latest status
+        return True

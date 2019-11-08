@@ -14,6 +14,7 @@ def apply_data_smoothing(data, window=1):
     new_data.extend(data[-window:])
     return new_data
 
+
 sample_rate_index = 1
 voltage_range = 0x01
 cal_freq = 10
@@ -27,7 +28,10 @@ scope.setup()
 scope.open_handle()
 scope.set_sample_rate(sample_rate_index)
 scope.set_ch1_voltage_range(voltage_range)
-print( scope.set_calibration_frequency( cal_freq ) )
+scope.set_ch1_ac_dc( scope.DC )
+scope.set_calibration_frequency( cal_freq )
+
+time.sleep( 1 )
 
 ch1_data, _ = scope.read_data(data_points)#,raw=True)#timeout=1)
 
