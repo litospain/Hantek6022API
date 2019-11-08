@@ -11,15 +11,18 @@ commands map as follows:
 
 | Oscilloscope Command | bRequest Value | Other Notes                                                            |
 |----------------------|----------------|------------------------------------------------------------------------|
-| Set CH0 voltage range|      0xE0      | Possible values: 1,2,5,10 (5V, 2.5V, 1V, 500mV).                       |
-| Set CH1 voltage range|      0xE1      | Possible values: 1,2,5,10 (5V, 2.5V, 1V, 500mV).                       |
-| Set Sampling Rate    |      0xE2      | Possible values:                                                       |
+| Set CH0 voltage range|      0xE0      | Parameter: 1,2,5,10 (Gain x1: 5V, x2: 2.5V, x5: 1V, x10: 500mV).            |
+| Set CH1 voltage range|      0xE1      | Parameter: 1,2,5,10 (Gain x1: 5V, x2: 2.5V, x5: 1V, x10: 500mV).            |
+| Set Sampling Rate    |      0xE2      | Parameter:                                                             |
 |                      |                |   48, 30, 24, 16, 15, 12, 10, 8, 6, 5, 4, 3, 2, 1 (MHz)                |
-|                      |                |   and 150,120,110 (500, 200, 100 kHz).                                 |
+|                      |                |   and 150,120,110,106 (500, 200, 100, 60 kHz).                         |
 | Trigger Oscilloscope |      0xE3      | Clear the FIFO on the FX2LP                                            |
-| Set Channel Number   |      0xE4      | Possible values: 1, 2                                                  |
-| Set Calibration Out  |      0xE6      | Possible values: 100, 50, 20, 10, 5, 2, 1 (kHz)                        |
-|                      |                | and 150, 120, 110, 105 ( 500, 200, 100, 50 Hz)                         |
+| Set Channel Number   |      0xE4      | Parameter: 1, 2                                                        |
+| Set AC_DC coupling *)|      0xE5      | Parameter: 0x00: AC/AC, 0x01: AC/DC, 0x10: DC/AC, 0x11: DC/DC          |
+| *) with [HW modification](HANTEK6022_AC_Modification.pdf)                                                      |
+| Set Calibration Out  |      0xE6      | Parameter:                                                             |
+|                      |                |   100, 50, 20, 10, 5, 2, 1 (kHz)                                       |
+|                      |                |   and 150, 120, 110, 105 ( 500, 200, 100, 50 Hz)                       |
 | Read/Write EEPROM    |      0xA2      | Read or write the eeprom built into the scope.                         |
 | Read/Write Firmware  |      0xA0      | Read or write the scope firmware. Must be done on scope initialization |
 
@@ -118,10 +121,61 @@ Values >0x80 increase the trace on screen, values <0x80 make it smaller.
 |   0x80 - 1 |  0.998 | smaller   |
 |       0x80 |  1.000 | no change |
 |    0x80 +1 |  1.002 | taller    |
-|         .. |     .. | ..        |   
+|         .. |     .. | ..        |
 | 0x80 + 125 |  1.250 | tallest   |
 |       0xFF |  1.000 | invalid   |
 
+The next 16 bytes (eeprom[56:71]) store sub-sample correction of offset calibration data for slow sample rates < 30 MS/s.
+
+| Address |      Value   |     Range |
+|---------|--------------|-----------|
+|      56 | CH0 off frac | 20 mV/div |
+|      57 | CH1 off frac | 20 mV/div |
+|      58 | CH0 off frac | 50 mV/div |
+|      59 | CH1 off frac | 50 mV/div |
+|      .. |           .. |        .. |
+|      70 | CH0 off frac |   5 V/div |
+|      71 | CH1 off frac |   5 V/div |
+
+The next 16 bytes (eeprom[72:87]) store sub-sample correction of offset calibration data for high sample rates >= 30 MS/s.
+
+| Address |      Value   |     Range |
+|---------|--------------|-----------|
+|      72 | CH0 off frac | 20 mV/div |
+|      73 | CH1 off frac | 20 mV/div |
+|      .. |           .. |        .. |
+|      84 | CH0 off frac |   2 V/div |
+|      85 | CH1 off frac |   2 V/div |
+|      86 | CH0 off frac |   5 V/div |
+|      87 | CH1 off frac |   5 V/div |
+
+A value of 0x80 means no correction, factor = 0.0
+0x00 and 0xFF -> invalid, ignored (Factory setting is 0xFF)
+Values >0x80 increase the offset, values <0x80 make it smaller.
+
+|      Value | Offset |    Result |
+|------------|--------|-----------|
+|       0x00 |  0.000 | invalid   |
+| 0x80 - 125 | -0.500 | smallest  |
+|         .. |     .. | ..        |
+|   0x80 - 1 | -0.002 | smaller   |
+|       0x80 |  0.000 | no change |
+|    0x80 +1 | +0.002 | taller    |
+|         .. |     .. | ..        |
+| 0x80 + 125 | +0.500 | tallest   |
+|       0xFF |  0.000 | invalid   |
+
+## Calibration
+
+The calibration values can be determined and set with the program [`examples/calibrate.py`](../examples/calibrate.py):
+
+    usage: calibrate.py [-h] [-c] [-e] [-g]
+
+    optional arguments:
+      -h, --help           show this help message and exit
+      -c, --create_config  create a config file
+      -e, --eeprom         store calibration values in eeprom
+      -g, --measure_gain   interactively measure gain (as well as offset)
 
 
 ## Pull Requests/Issues
