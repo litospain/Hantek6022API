@@ -129,7 +129,7 @@ _highspd_dscr:
 	.db	1			; Configuration number
 	.db	0			; Configuration string (none)
 	.db	0x80			; Attributes (bus powered, no wakeup)
-	.db	0x37			; Max. power (110mA)
+	.db	POWER			; Max. power, defined in descriptor.asm
 highspd_dscr_end:
 
 	; Bulk interface 0, alt 0
@@ -313,7 +313,7 @@ _fullspd_dscr:
 	.db	1			; Configuration number
 	.db	0			; Configuration string (none)
 	.db	0x80			; Attributes (bus powered, no wakeup)
-	.db	0x37			; Max. power (110mA)
+	.db	POWER			; Max. power, defined in descriptor.asm
 fullspd_dscr_end:
 
 	; Bulk interface 0, alt 0
