@@ -23,3 +23,8 @@ clean:
 	( cd $(BE) && make clean )
 	( cd $(BL) && make clean )
 
+xfer:
+	cp PyHT6022/HantekFirmware/custom_BE/dso6022be-firmware.hex \
+	../OpenHantek/OpenHantek6022/openhantek/res/firmware
+	cp PyHT6022/HantekFirmware/custom_BL/dso6022bl-firmware.hex \
+	../OpenHantek/OpenHantek6022/openhantek/res/firmware

@@ -33,8 +33,11 @@ _dev_strings:
 ; See http://www.usb.org/developers/docs/USB_LANGIDs.pdf for the full list.
 string_descriptor_lang 0 0x0409 ; Language code 0x0409 (English, US)
 
-string_descriptor_a 1,^"Hantek"
+; Manufacturer string
+string_descriptor_a 1,^"OpenHantek"
+; Produkt string
 string_descriptor_a 2,^"DSO-6022BE"
-string_descriptor_a 3,^"Custom FW"
+; Serial number string
+; string_descriptor_a 3,^"Custom FW"
 _dev_strings_end:
 	.dw	0x0000

@@ -97,7 +97,7 @@ _dev_dscr:
 	.dw	VER			; Product version/type
 	.db	1			; Manufacturer string index
 	.db	2			; Product string index
-	.db	3			; Serial number string index
+	.db	0			; Serial number string index, 0 if none
 	.db	1			; Number of configurations
 dev_dscr_end:
 
