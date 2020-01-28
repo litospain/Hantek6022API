@@ -54,13 +54,13 @@ Out of the box only offset values are contained in eeprom,
 the simple program `cal_zero.py` allows to update these values in case the offset has changed over time.
 Apply 0 V to both inputs (e.g. connect both probes to the GND calibration connector) and execute:
 
-    python examples/examples_libusb/cal_zero.py
+    python examples/cal_zero.py
 
 The more complex program `calibrate.py` measures and stores also gain calibration.
 To calibrate gain you have to apply a well known voltage (setpoint)
 and compare it with the actual value that is read by the scope:
 
-    python examples/examples_libusb/calibrate.py
+    python examples/calibrate.py
 
 This program guides you through the process.
 You have to apply several different voltages to both input,
@@ -141,11 +141,11 @@ that can be installed with
 
 With the device plugged in, run the flashfirmware.py example,
 
-    python examples/examples_libusb/flash_firmware_custom.py
+    python examples/flash_firmware_custom.py
 
 to bootstrap the scope for use. You can then write your own programs, or look at the current channel 1 scope trace via
 
-    python examples/examples_libusb/scopevis.py
+    python examples/scopevis.py
 
 ## TODO
 

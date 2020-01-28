@@ -1,6 +1,3 @@
-[submodule "PyHT6022/HantekFirmware/fx2lib"]
-	path = PyHT6022/HantekFirmware/fx2lib
-	url = https://github.com/Ho-Ro/fx2lib
-[submodule "PyHT6022/HantekFirmware/fx2lib_"]
+[submodule "fx2lib_update"]
 	path = PyHT6022/HantekFirmware/fx2lib
 	url = https://github.com/Ho-Ro/fx2lib
