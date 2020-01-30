@@ -107,7 +107,10 @@ To compile the custom firmware you have to install (as root) the _small devices 
 
     sudo apt install sdcc
 
-The firmware uses the submodule [fx2lib](https://github.com/djmuhlestein/fx2lib/tree/4d3336c3b5ebc2127a8e3c013ea13ad58873e9e0), pull it in:
+### Submodule fx2lib
+Hantek6022API uses the submodule [fx2lib](https://github.com/Ho-Ro/fx2lib) that I cloned from the [original fx2lib](https://github.com/djmuhlestein/fx2lib) to do minor maintenance updates. [![Build status](https://ci.appveyor.com/api/projects/status/inb66qa2snda987x?svg=true)](https://ci.appveyor.com/project/Ho-Ro/fx2lib)
+
+Pull the submodule in:
 
     git submodule update --init
 
