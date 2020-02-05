@@ -54,13 +54,13 @@ Out of the box only offset values are contained in eeprom,
 the program `calibrate.py` allows to update these values in case the offset has changed over time.
 
 Program to calibrate offset and gain of Hantek 6022BE/BL
-1.) Measure offset at low and high speed for the four gain steps x10, x5, x2, x1
-2.) Measure gain for the four gain steps x10, x5, x2, x1
-3.) Write offset values into eeprom and config file
+1. Measure offset at low and high speed for the four gain steps x10, x5, x2, x1
+2. Measure gain for the four gain steps x10, x5, x2, x1
+3. Write offset values into eeprom and config file
 
 Configure with command line arguments:
 
-    usage: calibrate.py [-h] [-c] [-g] [--no_eeprom]
+    usage: calibrate.py [-h] [-c] [-e] [-g]
 
     optional arguments:
         -h, --help           show this help message and exit

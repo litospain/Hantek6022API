@@ -8,7 +8,7 @@ Program to calibrate offset and gain of Hantek 6022BE/BL
 
 Configure with command line arguments:
 
-    usage: calibrate.py [-h] [-c] [-g] [--no_eeprom]
+    usage: calibrate.py [-h] [-c] [-e] [-g]
 
     optional arguments:
         -h, --help           show this help message and exit
