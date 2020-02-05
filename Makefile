@@ -13,7 +13,7 @@ fw_custom_BL:
 
 install: all
 	python3 setup.py install
-	cp 60-hantek-6022-usb.rules /etc/udev/rules.d/
+	if [ -d /etc/udev/rules.d/ ]; then cp 60-hantek-6022-usb.rules /etc/udev/rules.d/; fi
 
 deb:
 	fakeroot checkinstall --default --requires python3-libusb1 --install=no --backup=no --deldoc=yes

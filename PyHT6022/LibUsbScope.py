@@ -1,6 +1,6 @@
 __author__ = 'Robert Cope', 'Jochen Hoenicke'
 
-import sys
+import os
 import time
 import usb1
 import array
@@ -8,8 +8,6 @@ import select
 import libusb1
 import threading
 from struct import pack
-
-isPython3 = '3' == sys.version[0]
 
 from PyHT6022.HantekFirmware import custom_firmware_BE, custom_firmware_BL, fx2_ihex_to_control_packets
 
@@ -155,7 +153,7 @@ class Oscilloscope(object):
         if not self.device and not self.setup():
             return False
         self.device_handle = self.device.open()
-        if self.device_handle.kernelDriverActive(0):
+        if os.name == 'posix' and self.device_handle.kernelDriverActive(0):
             self.device_handle.detachKernelDriver(0)
         self.device_handle.claimInterface(0)
         if self.is_device_firmware_present:
