@@ -51,16 +51,32 @@ To reduce this effect OpenHantek uses individual correction values:
 
 Step 2 uses the factory offset calibration values in eeprom.
 Out of the box only offset values are contained in eeprom,
-the simple program `cal_zero.py` allows to update these values in case the offset has changed over time.
+the program `calibrate.py` allows to update these values in case the offset has changed over time.
+
+Program to calibrate offset and gain of Hantek 6022BE/BL
+1.) Measure offset at low and high speed for the four gain steps x10, x5, x2, x1
+2.) Measure gain for the four gain steps x10, x5, x2, x1
+3.) Write offset values into eeprom and config file
+
+Configure with command line arguments:
+
+    usage: calibrate.py [-h] [-c] [-g] [--no_eeprom]
+
+    optional arguments:
+        -h, --help           show this help message and exit
+        -c, --create_config  create config file
+        -e, --eeprom         store calibration values in eeprom
+        -g, --measure_gain   interactively measure gain (as well as offset)
+
 Apply 0 V to both inputs (e.g. connect both probes to the GND calibration connector) and execute:
 
-    python examples/cal_zero.py
+    python examples/calibrate.py -e
 
-The more complex program `calibrate.py` measures and stores also gain calibration.
+If is also possible to measure and create also gain calibration.
 To calibrate gain you have to apply a well known voltage (setpoint)
 and compare it with the actual value that is read by the scope:
 
-    python examples/calibrate.py
+    python examples/calibrate.py -ceg
 
 This program guides you through the process.
 You have to apply several different voltages to both input,
@@ -71,8 +87,8 @@ the program measures and compares them against the expected gain settings:
 3. Apply 0.8 V. The program measures the gain for range x5
 4. Apply 2.0 V. The program measures the gain for range x2
 5. Apply 4.0 V. The program measures the gain for range x1
-6. The program stores the calibration values in eeprom
-7. The program creates a config file `modelDSO6022.conf`
+6. The program option `-e` stores the calibration values in eeprom
+7. The program option `-c` creates a config file `modelDSO6022.conf`
 
 This config file can be copied into directory `~/.config/OpenHantek`.
 On every startup OpenHantek reads this file and applies the calibratipon accordingly.
@@ -107,7 +123,10 @@ To compile the custom firmware you have to install (as root) the _small devices 
 
     sudo apt install sdcc
 
-The firmware uses the submodule [fx2lib](https://github.com/djmuhlestein/fx2lib/tree/4d3336c3b5ebc2127a8e3c013ea13ad58873e9e0), pull it in:
+### Submodule fx2lib
+Hantek6022API uses the submodule [fx2lib](https://github.com/Ho-Ro/fx2lib) that I cloned from the [original fx2lib](https://github.com/djmuhlestein/fx2lib) to do minor maintenance updates. [![Build status](https://ci.appveyor.com/api/projects/status/inb66qa2snda987x?svg=true)](https://ci.appveyor.com/project/Ho-Ro/fx2lib)
+
+Pull the submodule in:
 
     git submodule update --init
 
