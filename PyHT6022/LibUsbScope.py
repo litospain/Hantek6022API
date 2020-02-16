@@ -14,8 +14,8 @@ from PyHT6022.HantekFirmware import custom_firmware_BE, custom_firmware_BL, fx2_
 class Oscilloscope(object):
     NO_FIRMWARE_VENDOR_ID = 0x04B4
     FIRMWARE_PRESENT_VENDOR_ID = 0x04B5
-    MODEL_ID_BE = 0x6022
-    MODEL_ID_BL = 0x602A
+    PRODUCT_ID_BE = 0x6022
+    PRODUCT_ID_BL = 0x602A
 
     RW_FIRMWARE_REQUEST = 0xa0	
     RW_FIRMWARE_INDEX = 0x00
@@ -99,8 +99,8 @@ class Oscilloscope(object):
                      }
 
 
-
-    def __init__(self, scope_id=0):
+    # defaults to 6022BE with the possibility to supply a non standard VID/PID combination
+    def __init__(self, VID=NO_FIRMWARE_VENDOR_ID, PID=PRODUCT_ID_BE):
         self.device = None
         self.device_handle = None
         self.context = usb1.USBContext()
@@ -110,20 +110,32 @@ class Oscilloscope(object):
         self.packetsize = None
         self.num_channels = 2
         self.ac_dc_status = 0x11
-        self.scope_id = scope_id
+        self.VID=VID
+        self.PID=PID
 
 
     def setup(self):
         """
         Attempt to find a suitable scope to run.
-        :return: True if a 6022{BE,BL} scope was found, False otherwise.
+        :return: True if a 6022{BE,BL} (or user defined) scope was found, False otherwise.
         """
-        # 1st look for 6022BE devices
+        # look for a user defined device that doesn't match 6022{BE,BL}
+        if ( ( self.VID != self.NO_FIRMWARE_VENDOR_ID and self.VID != self.FIRMWARE_PRESENT_VENDOR_ID )
+        or ( self.PID != self.PRODUCT_ID_BE and self.PID != self.PRODUCT_ID_BL ) ):
+            self.device = (
+                self.context.getByVendorIDAndProductID(
+                    self.VID, self.PID, skip_on_error=True, skip_on_access_error=True)
+                )
+            if self.device:
+                self.is_device_firmware_present = False
+                return True
+
+        # 1st look for 6022BE
         self.device = (
             self.context.getByVendorIDAndProductID(
-                self.FIRMWARE_PRESENT_VENDOR_ID, self.MODEL_ID_BE, skip_on_error=True, skip_on_access_error=True) 
+                self.FIRMWARE_PRESENT_VENDOR_ID, self.PRODUCT_ID_BE, skip_on_error=True, skip_on_access_error=True)
             or self.context.getByVendorIDAndProductID(
-                self.NO_FIRMWARE_VENDOR_ID, self.MODEL_ID_BE, skip_on_error=True, skip_on_access_error=True) 
+                self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BE, skip_on_error=True, skip_on_access_error=True)
             )
         if self.device: 
             self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
@@ -132,9 +144,9 @@ class Oscilloscope(object):
         # if not found look for 6022BL
         self.device = (
             self.context.getByVendorIDAndProductID(
-                self.FIRMWARE_PRESENT_VENDOR_ID, self.MODEL_ID_BL, skip_on_error=True, skip_on_access_error=True) 
+                self.FIRMWARE_PRESENT_VENDOR_ID, self.PRODUCT_ID_BL, skip_on_error=True, skip_on_access_error=True)
             or self.context.getByVendorIDAndProductID(
-                self.NO_FIRMWARE_VENDOR_ID, self.MODEL_ID_BL, skip_on_error=True, skip_on_access_error=True) 
+                self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BL, skip_on_error=True, skip_on_access_error=True)
             )
         if self.device: 
             self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
@@ -209,9 +221,9 @@ class Oscilloscope(object):
         if not self.device_handle:
             assert self.open_handle()
         if not firmware: # called without an explicit firmware parameter
-            if self.device.getProductID() == self.MODEL_ID_BE:
+            if self.device.getProductID() == self.PRODUCT_ID_BE:
                 firmware = custom_firmware_BE
-            elif self.device.getProductID() == self.MODEL_ID_BL:
+            elif self.device.getProductID() == self.PRODUCT_ID_BL:
                 firmware = custom_firmware_BL
             else:
                 return False
