@@ -1,6 +1,6 @@
 Quick hack to upload an intel hex firmware file on a cypress fx2 device.
 
-    usage: fx2hexload [OPTIONS] FIRMWARE [VID PID]
+    usage: fx2upload [OPTIONS] FIRMWARE [VID PID]
       uploads firmware to a Cypress FX2 USB device identified by VID and PID
       OPTIONS:   -v verbose
       FIRMWARE:  intel hex file

@@ -7,7 +7,7 @@
 
 
 int usage() {
-	puts( "usage: fx2hexload [OPTIONS] FIRMWARE [VID PID]" );
+	puts( "usage: fx2upload [OPTIONS] FIRMWARE [VID PID]" );
 	puts( "  uploads firmware to a Cypress FX2 USB device identified by VID and PID" );
 	puts( "  OPTIONS:   -v verbose ");
 	puts( "  FIRMWARE:  intel hex file" );
