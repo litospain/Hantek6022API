@@ -12,7 +12,7 @@ int Cypress::claimDevice( uint16_t vid, uint16_t pid ) {
 		return -1;
 	}
 
-	libusb_set_option( NULL, LIBUSB_OPTION_LOG_LEVEL, 0 );
+	// libusb_set_option( NULL, LIBUSB_OPTION_LOG_LEVEL, 0 );
 
 	device = libusb_open_device_with_vid_pid( NULL, vid, pid );
 	if ( device == nullptr ) {
