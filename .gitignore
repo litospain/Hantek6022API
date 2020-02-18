@@ -1,7 +1,9 @@
 *.py[cod]
 
-# C extensions
+# C extensions and binaries
 *.so
+*.o
+fx2upload
 
 # Packages
 *.egg
