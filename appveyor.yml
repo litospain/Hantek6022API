@@ -6,8 +6,8 @@ init:
     # build environment
 
     sudo apt-get update 
-    
-    sudo apt-get install --quiet --yes checkinstall fakeroot python3-setuptools python3-libusb1 sdcc
+
+    sudo apt-get install --quiet --yes checkinstall fakeroot python3-setuptools python3-libusb1 sdcc libusb-1.0-0-dev
 
 build_script:
 - sh: >-
