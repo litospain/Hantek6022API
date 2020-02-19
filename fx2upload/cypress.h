@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #pragma once
-#include "libusb-1.0/libusb.h"
+#include <libusb-1.0/libusb.h>
 
 class Cypress {
 public:
