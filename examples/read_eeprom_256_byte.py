@@ -2,7 +2,7 @@
 
 from PyHT6022.LibUsbScope import Oscilloscope
 
-scope = Oscilloscope()
+scope = Oscilloscope(0x14aa,0x0226)
 scope.setup()
 scope.open_handle()
 eeprom = scope.read_eeprom( 0, 256 )

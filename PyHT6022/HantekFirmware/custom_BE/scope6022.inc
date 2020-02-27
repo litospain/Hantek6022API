@@ -22,6 +22,9 @@
 #define CPU_FREQ  CLK_48M
 // 12 MHz: 500; 24 MHz: 1000; 48 MHz: 2000
 #define TIMER2_VAL 2000
+// CLK_48M & IFCLK30 -> 4 delays
+#define SYNCDELAY SYNCDELAY4
+
 
 #define OE_CTL (((1 << CTL_BIT) << 4) | (1 << CTL_BIT)) /* OEx = CTLx = 1 */
 
@@ -146,23 +149,23 @@ static BOOL set_numchannels(BYTE num)
 static void clear_fifo(void)
 {
 	GPIFABORT = 0xff;
-	SYNCDELAY3;
+	SYNCDELAY;
 	while (!(GPIFTRIG && 0x80))
 		;
 	FIFORESET = 0x80;
-	SYNCDELAY3;
+	SYNCDELAY;
 	EP2FIFOCFG = 0;
-	SYNCDELAY3;
+	SYNCDELAY;
 	EP6FIFOCFG = 0;
-	SYNCDELAY3;
+	SYNCDELAY;
 	FIFORESET = 0x02;
-	SYNCDELAY3;
+	SYNCDELAY;
 	FIFORESET = 0x06;
-	SYNCDELAY3;
+	SYNCDELAY;
 	EP2FIFOCFG = fifocfg;
-	SYNCDELAY3;
+	SYNCDELAY;
 	EP6FIFOCFG = fifocfg;
-	SYNCDELAY3;
+	SYNCDELAY;
 	FIFORESET = 0;
 }
 
@@ -170,7 +173,7 @@ static void clear_fifo(void)
 static void stop_sampling(void)
 {
 	GPIFABORT = 0xff;
-	SYNCDELAY3;
+	SYNCDELAY;
 	INPKTEND = (altiface == 0) ? 6 : 2;
 }
 
@@ -189,9 +192,9 @@ static void start_sampling(void)
 	while (!(GPIFTRIG & 0x80))
 		;
 
-	SYNCDELAY3;
+	SYNCDELAY;
 	GPIFTCB1 = 0x28;
-	SYNCDELAY3;
+	SYNCDELAY;
 	GPIFTCB0 = 0;
 	GPIFTRIG = (altiface == 0) ? 6 : 4;
 }
@@ -464,7 +467,7 @@ BOOL eeprom() {
 					;
 				eeprom_read( 0x51, addr, cur_read, EP0BUF );
 				EP0BCH=0;
-				SYNCDELAY3;
+				SYNCDELAY;
 				EP0BCL=cur_read;
 				len -= cur_read;
 				addr += cur_read;
@@ -573,11 +576,14 @@ static void init(void)
 	select_interface(0);
 }
 
+void insert_serial_number();
 
 static void main(void)
 {
-	/* Save energy. */
+	/* set to 48 MHz */
 	SETCPUFREQ( CPU_FREQ );
+
+	insert_serial_number();
 
 	init();
 
@@ -651,3 +657,32 @@ static void main(void)
 		}
 	}
 }
+
+__xdata __at 0xE507 volatile BYTE ID_reg1_L         ;  // ID register
+__xdata __at 0xE508 volatile BYTE ID_reg1_H         ;  // ID register
+__xdata __at 0xE509 volatile BYTE ID_reg2_L         ;  // ID register
+__xdata __at 0xE50A volatile BYTE ID_reg2_H         ;  // ID register
+__xdata __at 0xE50B volatile BYTE ID_reg3_L         ;  // ID register
+__xdata __at 0xE50C volatile BYTE ID_reg3_H         ;  // ID register
+
+extern __code BYTE serial_num;  //defined in descriptor.asm file for the serial number
+
+void insert_serial_number()
+{
+	WORD p_serial_num = (WORD)&serial_num;
+	char hex2Ascii[16]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'}; //array used to convert hex to ascii
+
+	*( (BYTE __xdata *)p_serial_num + 24 ) = hex2Ascii[ (ID_reg1_L & 0xF0) >> 4 ]; // LSB
+	*( (BYTE __xdata *)p_serial_num + 22 ) = hex2Ascii[ ID_reg1_L & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num + 20 ) = hex2Ascii[ (ID_reg1_H & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num + 18 ) = hex2Ascii[ ID_reg1_H & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num + 16 ) = hex2Ascii[ (ID_reg2_L & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num + 14 ) = hex2Ascii[ ID_reg2_L & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num + 12 ) = hex2Ascii[ (ID_reg2_H & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num + 10 ) = hex2Ascii[ ID_reg2_H & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num +  8 ) = hex2Ascii[ (ID_reg3_L & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num +  6 ) = hex2Ascii[ ID_reg3_L & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num +  4 ) = hex2Ascii[ (ID_reg3_H & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num +  2 ) = hex2Ascii[ ID_reg3_H & 0x0F ]; // MSB
+}
+

@@ -17,9 +17,6 @@
 ;; You should have received a copy of the GNU Lesser General Public
 ;; License along with this library; if not, see <http://www.gnu.org/licenses/>.
 ;;
-
-;;.include "common.inc"
-
 ;;
 ;; This file is part of the sigrok-firmware-fx2lafw project.
 ;;
@@ -55,7 +52,6 @@ _string'n:
 	.db	3
 	.dw	>l + (<l * 0x100)
 .endm
-
 
 
 .module DEV_DSCR
@@ -97,7 +93,7 @@ _dev_dscr:
 	.dw	VER			; Product version/type
 	.db	1			; Manufacturer string index
 	.db	2			; Product string index
-	.db	0			; Serial number string index, 0 if none
+	.db	3			; Serial number string index, 0 if none
 	.db	1			; Number of configurations
 dev_dscr_end:
 
