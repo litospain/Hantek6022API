@@ -39,7 +39,9 @@ string_descriptor_lang 0 0x0409 ; Language code 0x0409 (English, US)
 string_descriptor_a 1,^"OpenHantek"
 ; Produkt string
 string_descriptor_a 2,^"DSO-6022BE"
-; Serial number string template for unique FX2LP id, must be 12 byte long
+; Serial number string
+; The template for unique FX2LP id ...
+; ... must be 12 byte long, see Cypress KBA212789
 _serial_num:
 string_descriptor_a 3,^"000000000000"
 _dev_strings_end:

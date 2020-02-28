@@ -658,31 +658,24 @@ static void main(void)
 	}
 }
 
-__xdata __at 0xE507 volatile BYTE ID_reg1_L         ;  // ID register
-__xdata __at 0xE508 volatile BYTE ID_reg1_H         ;  // ID register
-__xdata __at 0xE509 volatile BYTE ID_reg2_L         ;  // ID register
-__xdata __at 0xE50A volatile BYTE ID_reg2_H         ;  // ID register
-__xdata __at 0xE50B volatile BYTE ID_reg3_L         ;  // ID register
-__xdata __at 0xE50C volatile BYTE ID_reg3_H         ;  // ID register
-
 extern __code BYTE serial_num;  //defined in descriptor.asm file for the serial number
 
-void insert_serial_number()
+void insert_serial_number() // see Cypress KBA212789
 {
 	WORD p_serial_num = (WORD)&serial_num;
 	char hex2Ascii[16]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'}; //array used to convert hex to ascii
 
-	*( (BYTE __xdata *)p_serial_num + 24 ) = hex2Ascii[ (ID_reg1_L & 0xF0) >> 4 ]; // LSB
-	*( (BYTE __xdata *)p_serial_num + 22 ) = hex2Ascii[ ID_reg1_L & 0x0F ];
-	*( (BYTE __xdata *)p_serial_num + 20 ) = hex2Ascii[ (ID_reg1_H & 0xF0) >> 4 ];
-	*( (BYTE __xdata *)p_serial_num + 18 ) = hex2Ascii[ ID_reg1_H & 0x0F ];
-	*( (BYTE __xdata *)p_serial_num + 16 ) = hex2Ascii[ (ID_reg2_L & 0xF0) >> 4 ];
-	*( (BYTE __xdata *)p_serial_num + 14 ) = hex2Ascii[ ID_reg2_L & 0x0F ];
-	*( (BYTE __xdata *)p_serial_num + 12 ) = hex2Ascii[ (ID_reg2_H & 0xF0) >> 4 ];
-	*( (BYTE __xdata *)p_serial_num + 10 ) = hex2Ascii[ ID_reg2_H & 0x0F ];
-	*( (BYTE __xdata *)p_serial_num +  8 ) = hex2Ascii[ (ID_reg3_L & 0xF0) >> 4 ];
-	*( (BYTE __xdata *)p_serial_num +  6 ) = hex2Ascii[ ID_reg3_L & 0x0F ];
-	*( (BYTE __xdata *)p_serial_num +  4 ) = hex2Ascii[ (ID_reg3_H & 0xF0) >> 4 ];
-	*( (BYTE __xdata *)p_serial_num +  2 ) = hex2Ascii[ ID_reg3_H & 0x0F ]; // MSB
+	*( (BYTE __xdata *)p_serial_num + 24 ) = hex2Ascii[ (UNIQID0 & 0xF0) >> 4 ]; // LSB
+	*( (BYTE __xdata *)p_serial_num + 22 ) = hex2Ascii[ UNIQID0 & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num + 20 ) = hex2Ascii[ (UNIQID1 & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num + 18 ) = hex2Ascii[ UNIQID1 & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num + 16 ) = hex2Ascii[ (UNIQID2 & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num + 14 ) = hex2Ascii[ UNIQID2 & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num + 12 ) = hex2Ascii[ (UNIQID3 & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num + 10 ) = hex2Ascii[ UNIQID3 & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num +  8 ) = hex2Ascii[ (UNIQID4 & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num +  6 ) = hex2Ascii[ UNIQID4 & 0x0F ];
+	*( (BYTE __xdata *)p_serial_num +  4 ) = hex2Ascii[ (UNIQID5 & 0xF0) >> 4 ];
+	*( (BYTE __xdata *)p_serial_num +  2 ) = hex2Ascii[ UNIQID5 & 0x0F ]; // MSB
 }
 
