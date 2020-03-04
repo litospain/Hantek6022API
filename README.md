@@ -12,7 +12,7 @@ __Hantek6022BE custom firmware is feature complete and usable for [OpenHantek602
 
 __Hantek6022BL custom firmware is feature complete but not as intensively tested as the BE version__
 
-<img alt="Scope Visualisation Example" width="100%" src="docs/images/HT6022BEBuiltInOscillator.png">
+<img alt="Scope Visualisation Example" width="100%" src="HT6022BEBuiltInOscillator.png">
 
 
 Hantek 6022 Python API for Linux. This is a API for Python for the
@@ -124,11 +124,11 @@ To compile the custom firmware you have to install (as root) the _small devices 
     sudo apt install sdcc
 
 ### Submodule fx2lib
-Hantek6022API uses the submodule [fx2lib](https://github.com/Ho-Ro/fx2lib) that I cloned from the [original fx2lib](https://github.com/djmuhlestein/fx2lib) to do minor maintenance updates. [![Build status](https://ci.appveyor.com/api/projects/status/inb66qa2snda987x?svg=true)](https://ci.appveyor.com/project/Ho-Ro/fx2lib)
+Hantek6022API uses the submodule [fx2lib](https://github.com/Ho-Ro/fx2lib) that I cloned from the [original fx2lib](https://github.com/djmuhlestein/fx2lib) to do minor maintenance updates.
 
 Pull the submodule in:
 
-    git submodule update --init
+    git submodule update --remote
 
 To build the custom firmware run `make` in the top level directory:
 

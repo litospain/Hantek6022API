@@ -57,25 +57,6 @@
 /* CTLx pin index (IFCLK, ADC clock input). */
 #define CTL_BIT 0
 
-#define OUT0 ((1 << CTL_BIT) << 4) /* OEx = 1, CTLx = 0 */
-
-#if 0
-static const struct samplerate_info samplerates[] = {
-	{ 48, 0x80,   0, 3, 0, 0x00, 0xea },
-	{ 30, 0x80,   0, 3, 0, 0x00, 0xaa },
-	{ 24,    1,   0, 2, 1, OUT0, 0xca },
-	{ 16,    1,   1, 2, 0, OUT0, 0xca },
-	{ 12,    2,   1, 2, 0, OUT0, 0xca },
-	{  8,    3,   2, 2, 0, OUT0, 0xca },
-	{  4,    6,   5, 2, 0, OUT0, 0xca },
-	{  2,   12,  11, 2, 0, OUT0, 0xca },
-	{  1,   24,  23, 2, 0, OUT0, 0xca },
-	{ 50,   48,  47, 2, 0, OUT0, 0xca },
-	{ 20,  120, 119, 2, 0, OUT0, 0xca },
-	{ 10,  240, 239, 2, 0, OUT0, 0xca },
-};
-#endif
-
 /*
  * This sets three bits for each channel, one channel at a time.
  * For channel 0 we want to set bits 1, 2 & 3 ( ....XXX. => mask 0x0e )

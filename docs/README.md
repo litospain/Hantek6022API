@@ -6,7 +6,7 @@ is thus to be able to write an open source driver that can be used on Linux (or 
 into that) to get more functionality out of this device. 
 
 Robert reverse engineered this scope by using the Windows SDK in a Windows VM, and watching USB traces on his Linux
-host machine. From [jhoenicke](https://github.com/jhoenicke), he was confirmed that the following USB URB control 
+host machine. From [jhoenicke](https://github.com/jhoenicke), he was confirmed that the following USB URB control
 commands map as follows:
 
 | Oscilloscope Command | bRequest Value | Other Notes                                                            |
@@ -35,19 +35,22 @@ reference Python libusb code should give further insight into the means for whic
 
 ## Custom, modified and stock firmware
 
-The Hantek 6022BE / BL uses a Cypress CY7C68013A (EZUSB FX2LP) processor with embedded 8051 core. 
-As the firmware is uploaded into RAM on every device initialisation, it is possible to use own firmware 
+The Hantek 6022BE / BL uses a Cypress CY7C68013A (EZUSB FX2LP) processor with embedded 8051 core.
+As the firmware is uploaded into RAM on every device initialisation, it is possible to use own firmware
 instead of the Hantek version in order to get better performance from the device.
+The custom version provides also alternate USB settings that use [isochronous transfer](https://community.cypress.com/docs/DOC-11853) mode instead of bulk transfer.
+The fastest iso mode allows a reliable transfer of up to 20 MB/s, while the bulk mode allows a transfer rate of up to 30 MB/s,
+although with some skipped data blocks at this fast speed. OpenHantek6022 currently only supports the bulk mode.
 
-By default the Python reference library will load ***custom_BE*** (or ***custom_BL***) firmware into the device. 
-I took the sigrok branch and backported it to provide default Hantek VID/PID, 
+By default the Python reference library will load ***custom_BE*** (or ***custom_BL***) firmware into the device.
+I took the sigrok branch and backported it to provide default Hantek VID/PID,
 added eeprom access and created a ***custom_BL*** variant for 6022BL.
 The eeprom access allows to write persistent calibration values directly into the scope.
 [OpenHantek6022](https://github.com/OpenHantek/OpenHantek6022) uses these firmware variants 
 and and takes advantage of the calibration values.
  
-The ***custom*** firmware and the ***modded*** versions were originally written by 
-[jhoenicke](https://github.com/jhoenicke), to extract more performance out of the device. 
+The ***custom*** firmware and the ***modded*** versions were originally written by
+[jhoenicke](https://github.com/jhoenicke), to extract more performance out of the device.
 The stock Hantek firmware is provided so that it may be uploaded and utilized as well.
 
 

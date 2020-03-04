@@ -57,9 +57,6 @@
 /* CTLx pin index (IFCLK, ADC clock input). */
 #define CTL_BIT 2
 
-#define OUT0 ((1 << CTL_BIT) << 4) /* OEx = 1, CTLx = 0 */
-
-
 /*
  * This sets three bits for each channel, one channel at a time.
  * For channel 0 we want to set bits 2, 3 & 4 ( ...XXX.. => mask 0x1c )

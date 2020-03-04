@@ -26,20 +26,7 @@
 #define SYNCDELAY SYNCDELAY4
 
 
-#define OE_CTL (((1 << CTL_BIT) << 4) | (1 << CTL_BIT)) /* OEx = CTLx = 1 */
-
 static BOOL set_voltage(BYTE channel, BYTE val);
-
-struct samplerate_info {
-	BYTE rate;
-	BYTE wait0;
-	BYTE wait1;
-	BYTE opc0;
-	BYTE opc1;
-	BYTE out0;
-	BYTE ifcfg;
-};
-
 
 /* Change to support as many interfaces as you need. */
 static BYTE altiface = 0;
@@ -228,9 +215,18 @@ static void select_interface(BYTE alt)
 }
 
 
-// struct samplerate_info{ rate, wait0, wait1, opc0, opc1, out0, ifcfg };
+struct samplerate_info {
+	BYTE rate;
+	BYTE wait0;
+	BYTE wait1;
+	BYTE opc0;
+	BYTE opc1;
+	BYTE ctlx;
+	BYTE ifcfg;
+};
+
 // rate -> ID 
-// wait0, wait1, opc0, opc1, out0 -> GPIF waveform registers
+// wait0, wait1, opc0, opc1, ctlx -> GPIF waveform registers (TRM 10.3.4)
 // ifcfg -> IFCONFIG register (TRM 15.5.2)
 //
 // IFCONFIG.7 : IFCLKSRC, 0: ext, 1: int (30/48 MHz)
@@ -240,32 +236,36 @@ static void select_interface(BYTE alt)
 // IFCONFIG.3 : ASYNC, 0: synchronously, clock supplied to IFCLK pin, 1: asynchronously, FIFO provides r/w strobes
 // IFCONFIG.2 : GSTATE, 1: PE.[10] = GSTATE.[10]
 // IFCONFIG.[10] : 00: ports, 01: reserved, 10: GPIF (internal) master, 11: slave FIFO (external master)
-//
 
 #define FULL48 0xea
 #define FULL30 0xaa
 #define IFCLK48 0xca
 #define IFCLK30 0x8a
 
+#define CTLx_LO ((1 << CTL_BIT) << 4) /* OEx = 1, CTLx = 0 */
+#define CTLx_HI (((1 << CTL_BIT) << 4) | (1 << CTL_BIT)) /* OEx = CTLx = 1 */
+
+
 static const struct samplerate_info samplerates[] = {
-	{  48, 0x80,   0, 3, 0, 0x00, FULL48 },  // 48
-	{  30, 0x80,   0, 3, 0, 0x00, FULL30 },  // 30
-	{  24,    1,   0, 2, 1, OUT0, IFCLK48 }, // 48 / 2
-	{  16,    1,   1, 2, 0, OUT0, IFCLK48 }, // 48 / 3
-	{  15,    1,   0, 2, 1, OUT0, IFCLK30 }, // 30 / 2
-	{  12,    2,   1, 2, 0, OUT0, IFCLK48 }, // 48 / 4
-	{  10,    1,   1, 2, 0, OUT0, IFCLK30 }, // 30 / 3
-	{   8,    3,   2, 2, 0, OUT0, IFCLK48 }, // 48 / 6
-	{   6,    2,   2, 2, 0, OUT0, IFCLK30 }, // 30 / 5
-	{   5,    3,   2, 2, 0, OUT0, IFCLK30 }, // 30 / 6
-	{   4,    6,   5, 2, 0, OUT0, IFCLK48 }, // 48 / 12
-	{   3,    5,   4, 2, 0, OUT0, IFCLK30 }, // 30 / 10
-	{   2,    7,   7, 2, 0, OUT0, IFCLK30 }, // 30 / 15
-	{   1,   15,  14, 2, 0, OUT0, IFCLK30 }, // 30 / 30
-	{ 150,   30,  29, 2, 0, OUT0, IFCLK30 }, // 30 / 60
-	{ 120,   75,  74, 2, 0, OUT0, IFCLK30 }, // 30 / 150
-	{ 110,  150, 149, 2, 0, OUT0, IFCLK30 }, // 30 / 300
-	{ 106,  250, 249, 2, 0, OUT0, IFCLK30 }  // 30 / 500
+        // ID wait0 wait1 opc0 opc1 ctlx ifcfg
+	{  48, 0x80,   0, 3, 0, 0x00, FULL48 },     // 48
+	{  30, 0x80,   0, 3, 0, 0x00, FULL30 },     // 30
+	{  24,    1,   0, 2, 1, CTLx_LO, IFCLK48 }, // 48 / 2
+	{  16,    1,   1, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 3
+	{  15,    1,   0, 2, 1, CTLx_LO, IFCLK30 }, // 30 / 2
+	{  12,    2,   1, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 4
+	{  10,    1,   1, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 3
+	{   8,    3,   2, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 6
+	{   6,    2,   2, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 5
+	{   5,    3,   2, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 6
+	{   4,    6,   5, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 12
+	{   3,    5,   4, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 10
+	{   2,    7,   7, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 15
+	{   1,   15,  14, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 30
+	{ 150,   30,  29, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 60
+	{ 120,   75,  74, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 150
+	{ 110,  150, 149, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 300
+	{ 106,  250, 249, 2, 0, CTLx_LO, IFCLK30 }  // 30 / 500
 };
 
 
@@ -286,55 +286,57 @@ static BOOL set_samplerate(BYTE rate)
 	AUTOPTRL2 = 0x00;
 
 	/*
-	 * The program for low-speed, e.g. 1 MHz, is:
-	 * wait 24, CTLx=0, FIFO
-	 * wait 23, CTLx=1
+	 * -> TRM 10.3.4
+	 *
+	 * The program for low-speed, e.g. 1 MHz (@30MHz), is:
+	 * wait 15, CTLx=0, DATA
+	 * wait 14, CTLx=1
 	 * jump 0, CTLx=1
 	 *
-	 * The program for 24 MHz is:
-	 * wait 1, CTLx=0, FIFO
+	 * The program for 24 MHz (@48MHz) is:
+	 * wait 1, CTLx=0, DATA
 	 * jump 0, CTLx=1
 	 *
 	 * The program for 30/48 MHz is:
-	 * jump 0, CTLx=Z, FIFO, LOOP
+	 * jump 0, CTLx=Z, DATA, LOOP
 	 *
 	 * (CTLx is device-dependent, could be e.g. CTL0 or CTL2.)
 	 */
 
-	/* LENGTH / BRANCH 0-7 */
+	// LENGTH[0..7] / BRANCH[0..7]
 	EXTAUTODAT2 = samplerates[i].wait0;
 	EXTAUTODAT2 = samplerates[i].wait1;
-	EXTAUTODAT2 = 1;
+	EXTAUTODAT2 = 0; // IF LOGIC_FUNCTION[2] THEN 0 ELSE 0
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 
-	/* OPCODE 0-7 */
+	// OPCODE[0..7]
 	EXTAUTODAT2 = samplerates[i].opc0;
 	EXTAUTODAT2 = samplerates[i].opc1;
-	EXTAUTODAT2 = 1; /* DATA=0 DP=1 */
+	EXTAUTODAT2 = 1; // DATA=0, DP=1 (Select BRANCH[2] in block above)
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 
-	/* OUTPUT 0-7 */
-	EXTAUTODAT2 = samplerates[i].out0;
-	EXTAUTODAT2 = OE_CTL;
-	EXTAUTODAT2 = OE_CTL;
+	// OUTPUT[0..7]
+	EXTAUTODAT2 = samplerates[i].ctlx;
+	EXTAUTODAT2 = CTLx_HI;
+	EXTAUTODAT2 = CTLx_HI;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 
-	/* LOGIC FUNCTION 0-7 */
+	// LOGIC_FUNCTION[0..7] (0bOPAAABBB -> AAA OP BBB)*/
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
+	EXTAUTODAT2 = 0; // RDY0 AND RDY0
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
 	EXTAUTODAT2 = 0;
