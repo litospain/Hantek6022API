@@ -55,7 +55,7 @@
 #define LED_RED_TOGGLE()		do { PC0 = !PC0; PC1 = 1; } while (0)
 
 /* CTLx pin index (IFCLK, ADC clock input). */
-#define CTL_BIT 2
+// #define CTL_BIT 2
 
 /*
  * This sets three bits for each channel, one channel at a time.

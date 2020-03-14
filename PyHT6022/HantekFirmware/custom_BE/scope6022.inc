@@ -214,58 +214,35 @@ static void select_interface(BYTE alt)
 	}
 }
 
+#include "waveforms.inc"
 
 struct samplerate_info {
 	BYTE rate;
-	BYTE wait0;
-	BYTE wait1;
-	BYTE opc0;
-	BYTE opc1;
-	BYTE ctlx;
-	BYTE ifcfg;
+	BYTE *waveform;
 };
 
-// rate -> ID 
-// wait0, wait1, opc0, opc1, ctlx -> GPIF waveform registers (TRM 10.3.4)
-// ifcfg -> IFCONFIG register (TRM 15.5.2)
-//
-// IFCONFIG.7 : IFCLKSRC, 0: ext, 1: int (30/48 MHz)
-// IFCONFIG.6 : 3048MHZ, 0: 30MHz, 1: 48MHz
-// IFCONFIG.5 : IFCLKOE, 0: tri-state, 1: drive
-// IFCONFIG.4 : IFCLKPOL, 0: normal polarity, 1: inverted
-// IFCONFIG.3 : ASYNC, 0: synchronously, clock supplied to IFCLK pin, 1: asynchronously, FIFO provides r/w strobes
-// IFCONFIG.2 : GSTATE, 1: PE.[10] = GSTATE.[10]
-// IFCONFIG.[10] : 00: ports, 01: reserved, 10: GPIF (internal) master, 11: slave FIFO (external master)
-
-#define FULL48 0xea
-#define FULL30 0xaa
-#define IFCLK48 0xca
-#define IFCLK30 0x8a
-
-#define CTLx_LO ((1 << CTL_BIT) << 4) /* OEx = 1, CTLx = 0 */
-#define CTLx_HI (((1 << CTL_BIT) << 4) | (1 << CTL_BIT)) /* OEx = CTLx = 1 */
-
-
 static const struct samplerate_info samplerates[] = {
-        // ID wait0 wait1 opc0 opc1 ctlx ifcfg
-	{  48, 0x80,   0, 3, 0, 0x00, FULL48 },     // 48
-	{  30, 0x80,   0, 3, 0, 0x00, FULL30 },     // 30
-	{  24,    1,   0, 2, 1, CTLx_LO, IFCLK48 }, // 48 / 2
-	{  16,    1,   1, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 3
-	{  15,    1,   0, 2, 1, CTLx_LO, IFCLK30 }, // 30 / 2
-	{  12,    2,   1, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 4
-	{  10,    1,   1, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 3
-	{   8,    3,   2, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 6
-	{   6,    2,   2, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 5
-	{   5,    3,   2, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 6
-	{   4,    6,   5, 2, 0, CTLx_LO, IFCLK48 }, // 48 / 12
-	{   3,    5,   4, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 10
-	{   2,    7,   7, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 15
-	{   1,   15,  14, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 30
-	{ 150,   30,  29, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 60
-	{ 120,   75,  74, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 150
-	{ 110,  150, 149, 2, 0, CTLx_LO, IFCLK30 }, // 30 / 300
-	{ 106,  250, 249, 2, 0, CTLx_LO, IFCLK30 }  // 30 / 500
+        // ID, waveform[ 32 ]
+	{  48, waveform_48  }, //  48 MS/s
+	{  30, waveform_30  }, //  30 MS/s
+	{  24, waveform_24  }, //  24 MS/s
+	{  16, waveform_16  }, //  16 MS/s
+	{  15, waveform_15  }, //  15 MS/s
+	{  12, waveform_12  }, //  12 MS/s
+	{  10, waveform_10  }, //  10 MS/s
+	{   8, waveform_8   }, //   8 MS/s
+	{   6, waveform_6   }, //   6 MS/s
+	{   5, waveform_5   }, //   5 MS/s
+	{   4, waveform_4   }, //   4 MS/s
+	{   3, waveform_3   }, //   3 MS/s
+	{   2, waveform_2   }, //   2 MS/s
+	{   1, waveform_1   }, //   1 MS/s
+	{ 150, waveform_150 }, // 500 kS/s
+	{ 120, waveform_120 }, // 200 kS/s
+	{ 110, waveform_110 }, // 100 kS/s
+	{ 106, waveform_106 }, //  60 kS/s
+	{ 105, waveform_105 }, //  50 kS/s
+	{ 102, waveform_102 }, //  20 kS/s
 };
 
 
@@ -274,76 +251,23 @@ static BOOL set_samplerate(BYTE rate)
 	BYTE i = 0;
 
 	while (samplerates[i].rate != rate) {
-		i++;
+		++i;
 		if ( i == sizeof(samplerates) / sizeof(samplerates[0]) )
-			return FALSE;
+			return FALSE; // not found
 	}
 
-	IFCONFIG = samplerates[i].ifcfg;
+	BYTE *waveform = samplerates[i].waveform;
 
 	AUTOPTRSETUP = 7;
 	AUTOPTRH2 = 0xE4; /* 0xE400: GPIF waveform descriptor 0. */
 	AUTOPTRL2 = 0x00;
 
-	/*
-	 * -> TRM 10.3.4
-	 *
-	 * The program for low-speed, e.g. 1 MHz (@30MHz), is:
-	 * wait 15, CTLx=0, DATA
-	 * wait 14, CTLx=1
-	 * jump 0, CTLx=1
-	 *
-	 * The program for 24 MHz (@48MHz) is:
-	 * wait 1, CTLx=0, DATA
-	 * jump 0, CTLx=1
-	 *
-	 * The program for 30/48 MHz is:
-	 * jump 0, CTLx=Z, DATA, LOOP
-	 *
-	 * (CTLx is device-dependent, could be e.g. CTL0 or CTL2.)
-	 */
+	i = 32;
+	while ( i-- ) // setup waveform 0
+		EXTAUTODAT2 = *waveform++;
 
-	// LENGTH[0..7] / BRANCH[0..7]
-	EXTAUTODAT2 = samplerates[i].wait0;
-	EXTAUTODAT2 = samplerates[i].wait1;
-	EXTAUTODAT2 = 0; // IF LOGIC_FUNCTION[2] THEN 0 ELSE 0
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-
-	// OPCODE[0..7]
-	EXTAUTODAT2 = samplerates[i].opc0;
-	EXTAUTODAT2 = samplerates[i].opc1;
-	EXTAUTODAT2 = 1; // DATA=0, DP=1 (Select BRANCH[2] in block above)
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-
-	// OUTPUT[0..7]
-	EXTAUTODAT2 = samplerates[i].ctlx;
-	EXTAUTODAT2 = CTLx_HI;
-	EXTAUTODAT2 = CTLx_HI;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-
-	// LOGIC_FUNCTION[0..7] (0bOPAAABBB -> AAA OP BBB)*/
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0; // RDY0 AND RDY0
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-	EXTAUTODAT2 = 0;
-
-	for (i = 0; i < 96; i++)
+	i = 96;
+	while ( i-- ) // clear waveform 1,2,3
 		EXTAUTODAT2 = 0;
 
 	return TRUE;
@@ -357,6 +281,11 @@ static BOOL set_calibration_pulse( BYTE freq )
 		ledinit = 25;
 		RCAP2L = -40000L & 0xff;
 		RCAP2H = (-40000L & 0xff00) >> 8;
+		break;
+	case 106:		// 60.001 Hz
+		ledinit = 30;
+		RCAP2L = -33333L & 0xff;
+		RCAP2H = (-33333L & 0xff00) >> 8;
 		break;
 	case 0:
 	case 110:		// 100 Hz

@@ -17,7 +17,7 @@ class Oscilloscope(object):
     PRODUCT_ID_BE = 0x6022
     PRODUCT_ID_BL = 0x602A
 
-    RW_FIRMWARE_REQUEST = 0xa0	
+    RW_FIRMWARE_REQUEST = 0xa0
     RW_FIRMWARE_INDEX = 0x00
 
     RW_EEPROM_REQUEST = 0xa2
@@ -60,10 +60,13 @@ class Oscilloscope(object):
 
     CALIBRATION_EEPROM_OFFSET = 0x08
 
-    SAMPLE_RATES = {106: ( "60 KS/s",  60e3),
-                    110: ("100 KS/s", 100e3),
-                    120: ("200 KS/s", 200e3),
-                    150: ("500 KS/s", 500e3),
+    SAMPLE_RATES = {
+                    102: ( "20 kS/s",  20e3),
+                    105: ( "50 kS/s",  50e3),
+                    106: ( "60 kS/s",  60e3),
+                    110: ("100 kS/s", 100e3),
+                    120: ("200 kS/s", 200e3),
+                    150: ("500 kS/s", 500e3),
                       1: (  "1 MS/s",   1e6),
                       2: (  "2 MS/s",   2e6),
                       3: (  "3 MS/s",   3e6),
@@ -77,15 +80,18 @@ class Oscilloscope(object):
                      16: ( "16 MS/s",  16e6),
                      24: ( "24 MS/s",  24e6),
                      30: ( "30 MS/s",  30e6),
-                     48: ( "48 MS/s",  48e6) }
+                     48: ( "48 MS/s",  48e6)
+                    }
 
     VOLTAGE_RANGES = { 1: ('+/- 5V', 0.0390625, 2.5),
                        2: ('+/- 2.5V', 0.01953125, 1.25),
                        5: ('+/- 1V', 0.0078125, 0.5),
-                      10: ('+/- 500mV', 0.00390625, 0.25) }
+                      10: ('+/- 500mV', 0.00390625, 0.25)
+                     }
 
     CAL_FREQUENCYS = {
                       105: ( " 50 Hz",     50 ),
+                      106: ( " 60 Hz",     60 ),
                       110: ( "100 Hz",    100 ),
                       120: ( "200 Hz",    200 ),
                       150: ( "500 Hz",    500 ),
