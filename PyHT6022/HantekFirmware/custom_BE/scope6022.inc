@@ -217,34 +217,34 @@ static void select_interface(BYTE alt)
 #include "waveforms.inc"
 
 struct samplerate_info {
-	BYTE rate;
-	BYTE *waveform;
+	const BYTE rate;
+	const BYTE *waveform;
+	const BYTE ifconfig;
 };
 
 static const struct samplerate_info samplerates[] = {
-        // ID, waveform[ 32 ]
-	{  48, waveform_48  }, //  48 MS/s
-	{  30, waveform_30  }, //  30 MS/s
-	{  24, waveform_24  }, //  24 MS/s
-	{  16, waveform_16  }, //  16 MS/s
-	{  15, waveform_15  }, //  15 MS/s
-	{  12, waveform_12  }, //  12 MS/s
-	{  10, waveform_10  }, //  10 MS/s
-	{   8, waveform_8   }, //   8 MS/s
-	{   6, waveform_6   }, //   6 MS/s
-	{   5, waveform_5   }, //   5 MS/s
-	{   4, waveform_4   }, //   4 MS/s
-	{   3, waveform_3   }, //   3 MS/s
-	{   2, waveform_2   }, //   2 MS/s
-	{   1, waveform_1   }, //   1 MS/s
-	{ 150, waveform_150 }, // 500 kS/s
-	{ 120, waveform_120 }, // 200 kS/s
-	{ 110, waveform_110 }, // 100 kS/s
-	{ 106, waveform_106 }, //  60 kS/s
-	{ 105, waveform_105 }, //  50 kS/s
-	{ 102, waveform_102 }, //  20 kS/s
+        // ID, waveform[32], ifconfig
+	{  48, waveform_48,  ifconfig_48  }, //  48 MS/s
+	{  30, waveform_30,  ifconfig_30  }, //  30 MS/s
+	{  24, waveform_24,  ifconfig_24  }, //  24 MS/s
+	{  16, waveform_16,  ifconfig_16  }, //  16 MS/s
+	{  15, waveform_15,  ifconfig_15  }, //  15 MS/s
+	{  12, waveform_12,  ifconfig_12  }, //  12 MS/s
+	{  10, waveform_10,  ifconfig_10  }, //  10 MS/s
+	{   8, waveform_8,   ifconfig_8   }, //   8 MS/s
+	{   6, waveform_6,   ifconfig_6   }, //   6 MS/s
+	{   5, waveform_5,   ifconfig_5   }, //   5 MS/s
+	{   4, waveform_4,   ifconfig_4   }, //   4 MS/s
+	{   3, waveform_3,   ifconfig_3   }, //   3 MS/s
+	{   2, waveform_2,   ifconfig_2   }, //   2 MS/s
+	{   1, waveform_1,   ifconfig_1   }, //   1 MS/s
+	{ 150, waveform_150, ifconfig_150 }, // 500 kS/s
+	{ 120, waveform_120, ifconfig_120 }, // 200 kS/s
+	{ 110, waveform_110, ifconfig_110 }, // 100 kS/s
+	{ 106, waveform_106, ifconfig_106 }, //  60 kS/s
+	{ 105, waveform_105, ifconfig_105 }, //  50 kS/s
+	{ 102, waveform_102, ifconfig_102 }, //  20 kS/s
 };
-
 
 static BOOL set_samplerate(BYTE rate)
 {
@@ -255,6 +255,8 @@ static BOOL set_samplerate(BYTE rate)
 		if ( i == sizeof(samplerates) / sizeof(samplerates[0]) )
 			return FALSE; // not found
 	}
+
+	IFCONFIG = samplerates[i].ifconfig;
 
 	BYTE *waveform = samplerates[i].waveform;
 
