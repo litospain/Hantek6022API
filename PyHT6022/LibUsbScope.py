@@ -589,30 +589,32 @@ class Oscilloscope(object):
 
 
     @staticmethod
-    def scale_read_data(read_data, voltage_range, probe_multiplier=1):
+    def scale_read_data(read_data, voltage_range, probe_multiplier=1, offset = 0):
         """
         Convenience function for converting data read from the scope to nicely scaled voltages.
         :param list read_data: The list of points returned from the read_data functions.
         :param int voltage_range: The voltage range current set for the channel.
         :param int probe_multiplier: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
                                  Default: 1
+        :param int offset: (OPTIONAL) An additional additive value to compensate the ADC offset
         :return: A list of correctly scaled voltages for the data.
         """
         scale_factor = (5.0 * probe_multiplier)/(voltage_range << 7)
-        return [(datum - 128)*scale_factor for datum in read_data]
+        return [(datum - 128 - offset)*scale_factor for datum in read_data]
 
 
     @staticmethod
-    def voltage_to_adc(voltage, voltage_range, probe_multiplier=1):
+    def voltage_to_adc(voltage, voltage_range, probe_multiplier=1, offset=0):
         """
         Convenience function for analog voltages into the ADC count the scope would see.
         :param float voltage: The analog voltage to convert.
         :param int voltage_range: The voltage range current set for the channel.
         :param int probe_multiplier: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
                                  Default: 1
+        :param int offset: (OPTIONAL) An additional additive value to simulate the ADC offset
         :return: The corresponding ADC count.
         """
-        return voltage*(voltage_range << 7)/(5.0 * probe_multiplier) + 128
+        return voltage*(voltage_range << 7)/(5.0 * probe_multiplier) + 128 + offset
 
 
     @staticmethod

@@ -52,3 +52,5 @@ model*.conf
 doc-pak
 *.deb
 backup-*.tgz
+
+*.out
