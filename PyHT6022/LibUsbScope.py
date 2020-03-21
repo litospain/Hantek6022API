@@ -58,7 +58,10 @@ class Oscilloscope(object):
     SET_CAL_FREQ_VALUE = 0x00
     SET_CAL_FREQ_INDEX = 0x00
 
-    CALIBRATION_EEPROM_OFFSET = 0x08
+    CALIBRATION_EEPROM_OFFSET   = 0x08
+    CALIBRATION_EEPROM_SIZE     = 32
+    CALIBRATION_EEPROM_EXT_SIZE = 80
+
 
     SAMPLE_RATES = {
                     102: ( "20 kS/s",  20e3),
@@ -118,6 +121,12 @@ class Oscilloscope(object):
         self.ac_dc_status = 0x11
         self.VID=VID
         self.PID=PID
+        self.calibration = None
+        self.calibration_ext = None
+        self.offset1 = { 1:0, 2:0, 5:0, 10:0 }
+        self.offset2 = { 1:0, 2:0, 5:0, 10:0 }
+        self.gain1 = { 1:1.04, 2:1.05, 5:1.03, 10:1.03 }
+        self.gain2 = { 1:1.04, 2:1.05, 5:1.03, 10:1.03 }
 
 
     def setup(self):
@@ -143,7 +152,7 @@ class Oscilloscope(object):
             or self.context.getByVendorIDAndProductID(
                 self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BE, skip_on_error=True, skip_on_access_error=True)
             )
-        if self.device: 
+        if self.device:
             self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
             return True
 
@@ -154,7 +163,7 @@ class Oscilloscope(object):
             or self.context.getByVendorIDAndProductID(
                 self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BL, skip_on_error=True, skip_on_access_error=True)
             )
-        if self.device: 
+        if self.device:
             self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
             return True
 
@@ -312,11 +321,72 @@ class Oscilloscope(object):
     def get_calibration_values(self, size=32, timeout=0):
         """
         Retrieve the current calibration values from the oscilloscope.
+        Calculate the internal offset and gain correction used by "scale_read_data()"
         :param timeout: (OPTIONAL) A timeout for the transfer. Default: 0 (No timeout)
         :return: A size size single byte int list of calibration values, if successful.
                  May assert or raise various libusb errors if something went wrong.
         """
-        return array.array('B', self.read_eeprom(self.CALIBRATION_EEPROM_OFFSET, size, timeout=timeout))
+        # get the standard (factory) calibration values, these are always available
+        self.calibration = array.array('B', self.read_eeprom(self.CALIBRATION_EEPROM_OFFSET, size, timeout=timeout))
+
+        self.offset1 = {
+          10: self.calibration[0]  - 128,
+           5: self.calibration[6]  - 128,
+           2: self.calibration[8]  - 128,
+           1: self.calibration[14] - 128
+        }
+
+        self.offset2 = {
+          10: self.calibration[1]  - 128,
+           5: self.calibration[7]  - 128,
+           2: self.calibration[9]  - 128,
+           1: self.calibration[15] - 128
+        }
+
+        # get the extended calibration values that are set by the "calibration.py" program
+        self.calibration_ext = array.array('B', self.read_eeprom(self.CALIBRATION_EEPROM_OFFSET, self.CALIBRATION_EEPROM_EXT_SIZE, timeout=timeout))
+
+        # check for extended offset correction
+        if self.calibration_ext[48] != 0 and self.calibration_ext[48] != 255:
+                self.offset1[10] = self.offset1[10] +  ( self.calibration_ext[48] - 128 ) / 250
+        if self.calibration_ext[54] != 0 and self.calibration_ext[54] != 255:
+                self.offset1[5]  = self.offset1[5]  +  ( self.calibration_ext[54] - 128 ) / 250
+        if self.calibration_ext[56] != 0 and self.calibration_ext[56] != 255:
+                self.offset1[2]  = self.offset1[2]  +  ( self.calibration_ext[56] - 128 ) / 250
+        if self.calibration_ext[62] != 0 and self.calibration_ext[62] != 255:
+                self.offset1[1]  = self.offset1[1]  +  ( self.calibration_ext[62] - 128 ) / 250
+
+        # check for gain correction
+        if self.calibration_ext[32] != 0 and self.calibration_ext[32] != 255:
+                self.gain1[10] = self.gain1[10] * ( 1 + ( self.calibration_ext[32] - 128 ) / 500 )
+        if self.calibration_ext[38] != 0 and self.calibration_ext[38] != 255:
+                self.gain1[5]  = self.gain1[5]  * ( 1 + ( self.calibration_ext[38] - 128 ) / 500 )
+        if self.calibration_ext[40] != 0 and self.calibration_ext[40] != 255:
+                self.gain1[2]  = self.gain1[2]  * ( 1 + ( self.calibration_ext[40] - 128 ) / 500 )
+        if self.calibration_ext[46] != 0 and self.calibration_ext[46] != 255:
+                self.gain1[1]  = self.gain1[1]  * ( 1 + ( self.calibration_ext[46] - 128 ) / 500 )
+
+        # check for extended offset correction
+        if self.calibration_ext[49] != 0 and self.calibration_ext[49] != 255:
+                self.offset2[10] = self.offset2[10] +  ( self.calibration_ext[49] - 128 ) / 250
+        if self.calibration_ext[55] != 0 and self.calibration_ext[55] != 255:
+                self.offset2[5]  = self.offset2[5]  +  ( self.calibration_ext[55] - 128 ) / 250
+        if self.calibration_ext[57] != 0 and self.calibration_ext[57] != 255:
+                self.offset2[2]  = self.offset2[2]  +  ( self.calibration_ext[57] - 128 ) / 250
+        if self.calibration_ext[63] != 0 and self.calibration_ext[63] != 255:
+                self.offset2[1]  = self.offset2[1]  +  ( self.calibration_ext[63] - 128 ) / 250
+
+        # check for gain correction
+        if self.calibration_ext[33] != 0 and self.calibration_ext[33] != 255:
+                self.gain2[10] = self.gain2[10] * ( 1 + ( self.calibration_ext[33] - 128 ) / 500 )
+        if self.calibration_ext[39] != 0 and self.calibration_ext[39] != 255:
+                self.gain2[5]  = self.gain2[5]  * ( 1 + ( self.calibration_ext[39] - 128 ) / 500 )
+        if self.calibration_ext[41] != 0 and self.calibration_ext[41] != 255:
+                self.gain2[2]  = self.gain2[2]  * ( 1 + ( self.calibration_ext[41] - 128 ) / 500 )
+        if self.calibration_ext[47] != 0 and self.calibration_ext[47] != 255:
+                self.gain2[1]  = self.gain2[1]  * ( 1 + ( self.calibration_ext[47] - 128 ) / 500 )
+
+        return self.calibration
 
 
     def set_calibration_values(self, cal_list, timeout=0):
@@ -588,46 +658,67 @@ class Oscilloscope(object):
             return self.read_async_bulk(callback, packets, outstanding_transfers, raw)
 
 
-    @staticmethod
-    def scale_read_data(read_data, voltage_range, probe_multiplier=1, offset = 0):
+    def scale_read_data( self, read_data, voltage_range=1, channel=1, probe=1, offset=0 ):
         """
         Convenience function for converting data read from the scope to nicely scaled voltages.
+        Apply the calibration values that are stored in EEPROM (call "get_calibration_values()" before)
         :param list read_data: The list of points returned from the read_data functions.
         :param int voltage_range: The voltage range current set for the channel.
-        :param int probe_multiplier: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
+        :param int channel: 1 = CH1, 2 = CH2.
+        :param int probe_multiplier: (OPTIONAL) An additonal multiplictive factor for changing the probe gain.
                                  Default: 1
         :param int offset: (OPTIONAL) An additional additive value to compensate the ADC offset
         :return: A list of correctly scaled voltages for the data.
         """
-        scale_factor = (5.0 * probe_multiplier)/(voltage_range << 7)
-        return [(datum - 128 - offset)*scale_factor for datum in read_data]
+        if channel == 1:
+                mul = probe * self.gain1[ voltage_range ]
+                off = offset + self.offset1[ voltage_range ]
+        else:
+                mul = probe * self.gain2[ voltage_range ]
+                off = offset + self.offset2[ voltage_range ]
+
+        scale_factor = ( 5.0 * mul ) / ( voltage_range << 7 )
+        return [ ( datum - 128 - off ) * scale_factor for datum in read_data ]
 
 
-    @staticmethod
-    def voltage_to_adc(voltage, voltage_range, probe_multiplier=1, offset=0):
+    def voltage_to_adc( self, voltage, voltage_range=1, channel=1, probe=1, offset=0 ):
         """
         Convenience function for analog voltages into the ADC count the scope would see.
         :param float voltage: The analog voltage to convert.
         :param int voltage_range: The voltage range current set for the channel.
-        :param int probe_multiplier: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
+        :param int channel: 1 = CH1, 2 = CH2.
+        :param int probe: (OPTIONAL) An additonal multiplictive factor for changing the probe gain.
                                  Default: 1
         :param int offset: (OPTIONAL) An additional additive value to simulate the ADC offset
         :return: The corresponding ADC count.
         """
-        return voltage*(voltage_range << 7)/(5.0 * probe_multiplier) + 128 + offset
+        if channel == 1:
+                mul = probe * self.gain1[ voltage_range ]
+                off = offset + self.offset1[ voltage_range ]
+        else:
+                mul = probe * self.gain2[ voltage_range ]
+                off = offset + self.offset2[ voltage_range ]
+        return voltage * ( voltage_range << 7 ) / ( 5.0 * mul ) + 128 + off
 
 
-    @staticmethod
-    def adc_to_voltage(adc_count, voltage_range, probe_multiplier=1):
+    def adc_to_voltage( self, adc_count, voltage_range=1, channel=1, probe=1, offset=0 ):
         """
         Convenience function for converting an ADC count from the scope to a nicely scaled voltage.
         :param int adc_count: The scope ADC count.
         :param int voltage_range: The voltage range current set for the channel.
-        :param int probe_multiplier: (OPTIONAL) An additonal multiplictive factor for changing the probe impedance.
+        :param int channel: 1 = CH1, 2 = CH2.
+        :param int probe: (OPTIONAL) An additonal multiplictive factor for changing the probe gain.
                                  Default: 1
+        :param int offset: (OPTIONAL) An additional additive value to correct the ADC offset, default: 0
         :return: The analog voltage corresponding to that ADC count.
         """
-        return (adc_count - 128)*(5.0 * probe_multiplier)/(voltage_range << 7)
+        if channel == 1:
+                mul = probe * self.gain1[ voltage_range ]
+                off = offset + self.offset1[ voltage_range ]
+        else:
+                mul = probe * self.gain2[ voltage_range ]
+                off = offset + self.offset2[ voltage_range ]
+        return ( adc_count - 128 - off ) * ( 5.0 * mul ) / ( voltage_range << 7 )
 
 
     def set_sample_rate(self, rate_index, timeout=0):
@@ -636,6 +727,8 @@ class Oscilloscope(object):
         returns.
         :param rate_index: The rate_index. These are the keys for the SAMPLE_RATES dict for the Oscilloscope object.
                            Common rate_index values and actual sample rate per channel:
+                           102 <->  20 kS/s
+                           105 <->  50 kS/s
                            106 <->  60 kS/s
                            110 <-> 100 kS/s
                            120 <-> 200 kS/s
