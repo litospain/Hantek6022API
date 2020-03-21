@@ -80,9 +80,9 @@ void suspend_isr(void) __interrupt SUSPEND_ISR
 
 void timer2_isr(void) __interrupt TF2_ISR
 {
-	/* Toggle the probe calibration pin, only accurate up to ca. 8MHz. */
+	/* Toggle the probe calibration pin. */
 	TOGGLE_CALIBRATION_PIN();
-	if ( ledcounter-- == 0 ) {	// led timed out
+	if ( ledcounter && --ledcounter == 0 ) {	// led timed out
 		ledcounter = ledinit;	// reload
 		LED_RED_TOGGLE();
 	}
@@ -439,7 +439,7 @@ BOOL handle_vendorcommand(BYTE cmd)
 
 	/* Set red LED, toggle after timeout. */
 	LED_RED();
-	ledcounter = 1000;
+	ledcounter = ledinit;
 
 	/* Clear EP0BCH/L for each valid command. */
 	if ( cmd >= 0xe0 && cmd <= 0xe6 ) {
@@ -464,9 +464,9 @@ BOOL handle_vendorcommand(BYTE cmd)
 
 		case 0xe3:
 			if ( EP0BUF[0] == 1 ) {
-				/* Set green LED, toggle red LED afterwards. */
+				/* Set green LED while sampling. */
 				LED_GREEN();
-				ledcounter = ledinit;
+				ledcounter = 0;
 				start_sampling();
 			}
 			return TRUE;
