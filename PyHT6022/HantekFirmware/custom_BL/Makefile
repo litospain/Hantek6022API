@@ -19,7 +19,7 @@
 # change location of fx2libdir if needed
 FX2LIBDIR=../fx2lib
 SOURCES=scope6022.c
-C_INCS=../custom_BE/scope6022.inc
+C_INCS=../custom_BE/scope6022.inc ../custom_BE/waveforms.inc
 A51_SOURCES=descriptor.asm
 A_INCS=../custom_BE/descriptor.inc
 BASENAME=dso6022bl-firmware

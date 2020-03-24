@@ -249,6 +249,7 @@ static const struct samplerate_info samplerates[] = {
 static BOOL set_samplerate(BYTE rate)
 {
 	BYTE i = 0;
+	const BYTE *waveform;
 
 	while (samplerates[i].rate != rate) {
 		++i;
@@ -258,7 +259,7 @@ static BOOL set_samplerate(BYTE rate)
 
 	IFCONFIG = samplerates[i].ifconfig;
 
-	BYTE *waveform = samplerates[i].waveform;
+	waveform = samplerates[i].waveform;
 
 	AUTOPTRSETUP = 7;
 	AUTOPTRH2 = 0xE4; /* 0xE400: GPIF waveform descriptor 0. */
