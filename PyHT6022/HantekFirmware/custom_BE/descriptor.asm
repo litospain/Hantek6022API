@@ -19,7 +19,7 @@
 
 VID = 0xB504	; Manufacturer ID (0x04B5)
 PID = 0x2260	; Product ID (0x6022) = 6022BE
-VER = 0x0502	; FW version 0x0205
+VER = 0x0602	; FW version 0x0206
 POWER = 500/2	; Max 500 mA (1=2mA)
 
 .include "../descriptor.inc"

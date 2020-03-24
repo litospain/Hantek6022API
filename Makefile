@@ -17,14 +17,21 @@ fw_custom_BL:
 fx2upload:
 	cd fx2upload && make
 
+
 .PHONY: install
 install: all
 	python3 setup.py install
 	if [ -d /etc/udev/rules.d/ ]; then cp 60-hantek-6022-usb.rules /etc/udev/rules.d/; fi
+	install examples/*_6022*.py /usr/local/bin
 
 .PHONY: deb
 deb:
 	fakeroot checkinstall --default --requires python3-libusb1 --install=no --backup=no --deldoc=yes
+
+.PHONY: debinstall
+debinstall: deb
+	sudo dpkg -i `ls hantek6022api_*.deb | tail -1`
+
 
 .PHONY: clean
 clean:
@@ -32,6 +39,7 @@ clean:
 	( cd $(BE) && make clean )
 	( cd $(BL) && make clean )
 	( cd fx2upload && make clean )
+
 
 .PHONY: xfer
 xfer:

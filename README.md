@@ -51,7 +51,7 @@ To reduce this effect OpenHantek uses individual correction values:
 
 Step 2 uses the factory offset calibration values in eeprom.
 Out of the box only offset values are contained in eeprom,
-the program `calibrate.py` allows to update these values in case the offset has changed over time.
+the program `calibrate_6022.py` (installed in `/usr/local/bin`) allows to update these values in case the offset has changed over time.
 
 Program to calibrate offset and gain of Hantek 6022BE/BL
 1. Measure offset at low and high speed for the four gain steps x10, x5, x2, x1
@@ -60,7 +60,7 @@ Program to calibrate offset and gain of Hantek 6022BE/BL
 
 Configure with command line arguments:
 
-    usage: calibrate.py [-h] [-c] [-e] [-g]
+    usage: calibrate_6022.py [-h] [-c] [-e] [-g]
 
     optional arguments:
         -h, --help           show this help message and exit
@@ -70,13 +70,13 @@ Configure with command line arguments:
 
 Apply 0 V to both inputs (e.g. connect both probes to the GND calibration connector) and execute:
 
-    python examples/calibrate.py -e
+    calibrate_6022.py -e
 
 If is also possible to measure and create also gain calibration.
 To calibrate gain you have to apply a well known voltage (setpoint)
 and compare it with the actual value that is read by the scope:
 
-    python examples/calibrate.py -ceg
+    calibrate_6022.py -ceg
 
 This program guides you through the process.
 You have to apply several different voltages to both input,
@@ -156,15 +156,33 @@ Create a debian package:
 
 that can be installed with
 
-    sudo dpkg -i dist/hantek6022api_...
+    make debinstall
 
-With the device plugged in, run the flashfirmware.py example,
+which calls
 
-    python examples/flash_firmware_custom.py
+    sudo dpkg -i hantek6022api_...
 
-to bootstrap the scope for use. You can then write your own programs, or look at the current channel 1 scope trace via
+for the latest debian package. This installs the python modules together with some utility programs.
 
-    python examples/scopevis.py
+With the device plugged in, run `upload_6022_firmware.py`  (installed into `/usr/local/bin`) to bootstrap the scope for use. 
+You can then write your own programs, or look at the current channel 1 scope trace via `python examples/scopevis.py`.
+
+The program `capture_6022.py` (also in `/usr/local/bin/`) allows to capture both channels over a long time.
+
+The 256x downsampling option increases the SNR and effective resolution (8bit -> 12 bit) and allows very long time recording.
+The program uses the offset and gain calibration from EEPROM.
+It writes the captured data into `captured.out` and calculates DC and RMS of the data.
+
+    usage: capture_6022.py [-h] [-d] [-r RATE] [-t TIME] [-x CH1] [-y CH2]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -d, --downsample      downsample 256x
+      -r RATE, --rate RATE  sample rate in kS/s (20, 50, 64, 100, default: 20)
+      -t TIME, --time TIME  capture time in seconds (default: 60)
+      -x CH1, --ch1 CH1     gain of channel 1 (1, 2, 5, 10, default: 1)
+      -y CH2, --ch2 CH2     gain of channel 2 (1, 2, 5, 10, default: 1)
+
 
 ## TODO
 

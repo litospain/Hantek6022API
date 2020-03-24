@@ -12,6 +12,7 @@ from struct import pack
 from PyHT6022.HantekFirmware import custom_firmware_BE, custom_firmware_BL, fx2_ihex_to_control_packets
 
 class Oscilloscope(object):
+    FIRMWARE_VERSION = 0x0206
     NO_FIRMWARE_VENDOR_ID = 0x04B4
     FIRMWARE_PRESENT_VENDOR_ID = 0x04B5
     PRODUCT_ID_BE = 0x6022
@@ -66,7 +67,7 @@ class Oscilloscope(object):
     SAMPLE_RATES = {
                     102: ( "20 kS/s",  20e3),
                     105: ( "50 kS/s",  50e3),
-                    106: ( "60 kS/s",  60e3),
+                    106: ( "64 kS/s",  64e3),
                     110: ("100 kS/s", 100e3),
                     120: ("200 kS/s", 200e3),
                     150: ("500 kS/s", 500e3),
@@ -139,8 +140,9 @@ class Oscilloscope(object):
         or ( self.PID != self.PRODUCT_ID_BE and self.PID != self.PRODUCT_ID_BL ) ):
             self.device = (
                 self.context.getByVendorIDAndProductID(
-                    self.VID, self.PID, skip_on_error=True, skip_on_access_error=True)
+                    self.VID, self.PID, skip_on_error=True, skip_on_access_error=True
                 )
+            )
             if self.device:
                 self.is_device_firmware_present = False
                 return True
@@ -148,23 +150,33 @@ class Oscilloscope(object):
         # 1st look for 6022BE
         self.device = (
             self.context.getByVendorIDAndProductID(
-                self.FIRMWARE_PRESENT_VENDOR_ID, self.PRODUCT_ID_BE, skip_on_error=True, skip_on_access_error=True)
-            or self.context.getByVendorIDAndProductID(
-                self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BE, skip_on_error=True, skip_on_access_error=True)
+                self.FIRMWARE_PRESENT_VENDOR_ID, self.PRODUCT_ID_BE, skip_on_error=True, skip_on_access_error=True
             )
+         or self.context.getByVendorIDAndProductID(
+                self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BE, skip_on_error=True, skip_on_access_error=True
+            )
+        )
         if self.device:
-            self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
+            self.is_device_firmware_present = (
+                  self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
+              and self.device.getbcdDevice() == self.FIRMWARE_VERSION
+            )
             return True
 
         # if not found look for 6022BL
         self.device = (
             self.context.getByVendorIDAndProductID(
-                self.FIRMWARE_PRESENT_VENDOR_ID, self.PRODUCT_ID_BL, skip_on_error=True, skip_on_access_error=True)
-            or self.context.getByVendorIDAndProductID(
-                self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BL, skip_on_error=True, skip_on_access_error=True)
+                self.FIRMWARE_PRESENT_VENDOR_ID, self.PRODUCT_ID_BL, skip_on_error=True, skip_on_access_error=True
             )
+         or self.context.getByVendorIDAndProductID(
+                self.NO_FIRMWARE_VENDOR_ID, self.PRODUCT_ID_BL, skip_on_error=True, skip_on_access_error=True
+            )
+        )
         if self.device:
-            self.is_device_firmware_present = self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
+            self.is_device_firmware_present = (
+                  self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
+              and self.device.getbcdDevice() == self.FIRMWARE_VERSION
+            )
             return True
 
         return False
@@ -729,7 +741,7 @@ class Oscilloscope(object):
                            Common rate_index values and actual sample rate per channel:
                            102 <->  20 kS/s
                            105 <->  50 kS/s
-                           106 <->  60 kS/s
+                           106 <->  64 kS/s
                            110 <-> 100 kS/s
                            120 <-> 200 kS/s
                            150 <-> 500 kS/s
@@ -853,6 +865,7 @@ class Oscilloscope(object):
         :param rate_index: The rate_index. These are the keys for the CAL_FREQUNCY dict for the Oscilloscope object.
                            Common rate_index values and actual sample rate per channel:
                           105 <->  50 Hz
+                          106 <->  60 Hz
                           110 <-> 100 Hz
                           120 <-> 200 Hz
                           150 <-> 500 Hz
