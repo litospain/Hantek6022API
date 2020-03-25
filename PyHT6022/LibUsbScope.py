@@ -126,8 +126,8 @@ class Oscilloscope(object):
         self.calibration_ext = None
         self.offset1 = { 1:0, 2:0, 5:0, 10:0 }
         self.offset2 = { 1:0, 2:0, 5:0, 10:0 }
-        self.gain1 = { 1:1.04, 2:1.05, 5:1.03, 10:1.03 }
-        self.gain2 = { 1:1.04, 2:1.05, 5:1.03, 10:1.03 }
+        self.gain1 = { 1:1.01, 2:1.01, 5:0.99, 10:1.0 }
+        self.gain2 = { 1:1.01, 2:1.01, 5:0.99, 10:1.0 }
 
 
     def setup(self):
@@ -689,7 +689,7 @@ class Oscilloscope(object):
                 mul = probe * self.gain2[ voltage_range ]
                 off = offset + self.offset2[ voltage_range ]
 
-        scale_factor = ( 5.0 * mul ) / ( voltage_range << 7 )
+        scale_factor = ( 5.12 * mul ) / ( voltage_range << 7 )
         return [ ( datum - 128 - off ) * scale_factor for datum in read_data ]
 
 
@@ -710,7 +710,7 @@ class Oscilloscope(object):
         else:
                 mul = probe * self.gain2[ voltage_range ]
                 off = offset + self.offset2[ voltage_range ]
-        return voltage * ( voltage_range << 7 ) / ( 5.0 * mul ) + 128 + off
+        return voltage * ( voltage_range << 7 ) / ( 5.12 * mul ) + 128 + off
 
 
     def adc_to_voltage( self, adc_count, voltage_range=1, channel=1, probe=1, offset=0 ):
@@ -730,7 +730,7 @@ class Oscilloscope(object):
         else:
                 mul = probe * self.gain2[ voltage_range ]
                 off = offset + self.offset2[ voltage_range ]
-        return ( adc_count - 128 - off ) * ( 5.0 * mul ) / ( voltage_range << 7 )
+        return ( adc_count - 128 - off ) * ( 5.12 * mul ) / ( voltage_range << 7 )
 
 
     def set_sample_rate(self, rate_index, timeout=0):
