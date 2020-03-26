@@ -132,13 +132,13 @@ def packet_callback( ch1_data, ch2_data ):
         rms2 = rms2 + (value*value)
     av2 = av2 / size
     if downsample:
-        if timestep <= sample_time:
-            outfile.write( "{:<10.6g} {:< 10.4g} {:< 10.4g}\n".format( timestep, av1, av2 ) )
+        if timestep < sample_time:
+            outfile.write( "{:<10.6g}, {:< 10.4g}, {:< 10.4g}\n".format( timestep, av1, av2 ) )
         timestep = timestep + tick * size
     else:
         for ch1_value, ch2_value in zip( ch1_scaled, ch2_scaled ): # merge CH1 & CH2
-            if timestep <= sample_time:
-                outfile.write( "{:<10.6g} {:< 10.4g} {:< 10.4g}\n".format( timestep, ch1_value, ch2_value ) )
+            if timestep < sample_time:
+                outfile.write( "{:<10.6g}, {:< 10.4g}, {:< 10.4g}\n".format( timestep, ch1_value, ch2_value ) )
             timestep = timestep + tick
 #
 ########################################################
