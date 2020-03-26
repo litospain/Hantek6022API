@@ -157,10 +157,11 @@ class Oscilloscope(object):
             )
         )
         if self.device:
+            self.supports_single_channel = \
             self.is_device_firmware_present = (
                   self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
               and self.device.getbcdDevice() == self.FIRMWARE_VERSION
-            )
+            ) # latest custom FW loaded
             return True
 
         # if not found look for 6022BL
@@ -173,10 +174,11 @@ class Oscilloscope(object):
             )
         )
         if self.device:
+            self.supports_single_channel = \
             self.is_device_firmware_present = (
                   self.device.getVendorID() == self.FIRMWARE_PRESENT_VENDOR_ID
               and self.device.getbcdDevice() == self.FIRMWARE_VERSION
-            )
+            ) # latest custom FW loaded
             return True
 
         return False

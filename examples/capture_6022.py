@@ -2,19 +2,18 @@
 '''
 Samples CH1 and Ch2 for a defined time and writes the time stamp and the voltage values to a file
 
-usage: capture.py [-h] [-c CHANNELS] [-s SAMPLERATE] [-x CH1GAIN] [-y CH2GAIN] [-t TIME]
+usage: capture_6022.py [-h] [-d] [-o [OUTFILE]] [-r RATE] [-t TIME] [-x CH1]
+                       [-y CH2]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c CHANNELS, --channels CHANNELS
-                        how many channels to capture, default: 2
-  -s SAMPLERATE, --samplerate SAMPLERATE
-                        sample rate (20e3, 50e3, 64e3, 100e3, default: 20e3)
-  -x CH1GAIN --ch1gain CH1GAIN
-                        gain of channel 1 (1, 2, 5, 10, default: 1)
-  -y CH2GAIN --ch2gain CH2GAIN
-                        gain of channel 2 (1, 2, 5, 10, default: 1)
-  -t TIME, --time TIME  capture time (default: 60 s)
+  -d, --downsample      downsample 256x
+  -o [OUTFILE], --outfile [OUTFILE]
+                        write the data into [OUTFILE]
+  -r RATE, --rate RATE  sample rate in kS/s (20, 50, 64, 100, default: 20)
+  -t TIME, --time TIME  capture time in seconds (default: 60)
+  -x CH1, --ch1 CH1     gain of channel 1 (1, 2, 5, 10, default: 1)
+  -y CH2, --ch2 CH2     gain of channel 2 (1, 2, 5, 10, default: 1)
 '''
 
 from PyHT6022.LibUsbScope import Oscilloscope
@@ -29,27 +28,30 @@ ap = argparse.ArgumentParser()
 #    help="how many channels to capture, default: 2" )
 ap.add_argument( "-d", "--downsample", action = "store_true",
     help="downsample 256x" )
-ap.add_argument( "-r", "--rate", type = float, default = 20,
+ap.add_argument( "-o", "--outfile", type = argparse.FileType("w"), nargs = "?",
+    help="write the data into [OUTFILE]" )
+ap.add_argument( "-r", "--rate", type = int, default = 20,
     help="sample rate in kS/s (20, 50, 64, 100, default: 20)" )
 ap.add_argument( "-t", "--time", type = float, default = 60,
-    help="capture time in seconds (default: 60)" )
+    help="capture time in seconds (default: 60.0)" )
 ap.add_argument( "-x", "--ch1", type = int, default = 1,
     help="gain of channel 1 (1, 2, 5, 10, default: 1)" )
 ap.add_argument( "-y", "--ch2", type = int, default = 1,
     help="gain of channel 2 (1, 2, 5, 10, default: 1)" )
 
-args = vars(ap.parse_args())
+options = ap.parse_args()
 
 ############
 # settings #
 ############
 #
 channels    = 2
-downsample  = args["downsample"]
-sample_rate = int(args["rate"])
-sample_time = args["time"]
-ch1gain     = args["ch1"]
-ch2gain     = args["ch2"]
+downsample  = options.downsample
+sample_rate = options.rate
+sample_time = options.time
+ch1gain     = options.ch1
+ch2gain     = options.ch2
+outfile     = options.outfile or sys.stdout
 
 valid_sample_rates = ( 20, 50, 64, 100 )
 valid_gains = ( 1, 2, 5, 10 )
@@ -101,8 +103,10 @@ scope.set_ch1_voltage_range( ch1gain )
 scope.set_ch2_voltage_range( ch2gain )
 
 
-# this callback is called every time when data packets arrive
+########################################################
+# this callback is called every time data packet arrives
 # scale the data packets and write them into the file
+#
 def packet_callback( ch1_data, ch2_data ):
     global skip1st, start_time, timestep, tick
     global totalsize, dc1, dc2, rms1, rms2
@@ -128,51 +132,60 @@ def packet_callback( ch1_data, ch2_data ):
         rms2 = rms2 + (value*value)
     av2 = av2 / size
     if downsample:
-        capture.write( "{:<10.6g} {:< 10.4g} {:< 10.4g}\n".format( timestep, av1, av2 ) )
+        if timestep <= sample_time:
+            outfile.write( "{:<10.6g} {:< 10.4g} {:< 10.4g}\n".format( timestep, av1, av2 ) )
         timestep = timestep + tick * size
     else:
         for ch1_value, ch2_value in zip( ch1_scaled, ch2_scaled ): # merge CH1 & CH2
-            capture.write( "{:<10.6g} {:< 10.4g} {:< 10.4g}\n".format( timestep, ch1_value, ch2_value ) )
+            if timestep <= sample_time:
+                outfile.write( "{:<10.6g} {:< 10.4g} {:< 10.4g}\n".format( timestep, ch1_value, ch2_value ) )
             timestep = timestep + tick
+#
+########################################################
 
 
-# create file for time stamp and sample values of both channels
-capture = open('captured.out'.format( sample_time ), 'wt')
 skip1st = True # marker for skip of 1st (unstable) packet
 tick = 1 / sample_rate
 totalsize = 0
 dc1 = dc2 = rms1 = rms2 = 0
+
 timestep = 0
 start_time = time.time() + scope.packetsize / sample_rate
 end_time = start_time + sample_time
+
 scope.start_capture()
 shutdown_event = scope.read_async( packet_callback, scope.packetsize, outstanding_transfers=10, raw=True)
 
 # sample until time is over
-lastsec = -1
+lastsec = 0
 while True:
     to_go = start_time + sample_time - time.time()
-    if int( to_go ) != lastsec:
-        lastsec = int( to_go )
-        sys.stderr.write( "\rCapture " + str(lastsec+1) + " seconds ...   " )
     if to_go <= 0:
-        sys.stderr.write( "\rCaptured data for "+ str(sample_time) + " seconds\n" )
         break
+    if int( to_go ) != lastsec:
+        if lastsec:
+            sys.stderr.write( "\rCapturing " + str(lastsec) + " seconds ...   " )
+        else:
+            sys.stderr.write( "\rCapturing " + str(sample_time) + " seconds ...   " )
+        lastsec = int( to_go )
+        outfile.flush()
     scope.poll()
 
 scope.stop_capture()
 shutdown_event.set()
 
-# fetch remaining packets before closing the scope
-time.sleep(1)
+# fetch remaining packets before closing the scope (max 1024 * 50µs = 0.0512 s)
+time.sleep(0.1)
+
 scope.close_handle()
+sys.stderr.write( "\rCaptured data for "+ str(sample_time) + " second(s)\n" )
 
 dc1 = dc1 / totalsize
 dc2 = dc2 / totalsize
 rms1 = math.sqrt( rms1 / totalsize )
 rms2 = math.sqrt( rms2 / totalsize )
 
-print( "CH1: DC = {:8.4f} V, RMS = {:8.4f} V".format( dc1, rms1 ) )
-print( "CH2: DC = {:8.4f} V, RMS = {:8.4f} V".format( dc2, rms2 ) )
+sys.stderr.write( "CH1: DC = {:8.4f} V, RMS = {:8.4f} V\n".format( dc1, rms1 ) )
+sys.stderr.write( "CH2: DC = {:8.4f} V, RMS = {:8.4f} V\n".format( dc2, rms2 ) )
 
-capture.close()
+outfile.close()
