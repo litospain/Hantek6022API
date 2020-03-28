@@ -2,16 +2,17 @@
 '''
 Samples CH1 and Ch2 for a defined time and writes the time stamp and the voltage values to a file
 
-usage: capture_6022.py [-h] [-d] [-o [OUTFILE]] [-r RATE] [-t TIME] [-x CH1]
-                       [-y CH2]
+usage: capture_6022.py [-h] [-d DOWNSAMPLE] [-o OUTFILE] [-r RATE] [-t TIME]
+                       [-x CH1] [-y CH2]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -d, --downsample      downsample 256x
-  -o [OUTFILE], --outfile [OUTFILE]
-                        write the data into [OUTFILE]
+  -d, --downsample DOWNSAMPLE
+                        downsample 256 x DOWNSAMPLE
+  -o OUTFILE, --outfile OUTFILE
+                        write the data into OUTFILE
   -r RATE, --rate RATE  sample rate in kS/s (20, 50, 64, 100, default: 20)
-  -t TIME, --time TIME  capture time in seconds (default: 60)
+  -t TIME, --time TIME  capture time in seconds (default: 1.0)
   -x CH1, --ch1 CH1     gain of channel 1 (1, 2, 5, 10, default: 1)
   -y CH2, --ch2 CH2     gain of channel 2 (1, 2, 5, 10, default: 1)
 '''
@@ -26,14 +27,14 @@ import sys
 ap = argparse.ArgumentParser()
 #ap.add_argument( "-c", "--channels", type = int, default = 2,
 #    help="how many channels to capture, default: 2" )
-ap.add_argument( "-d", "--downsample", action = "store_true",
-    help="downsample 256x" )
-ap.add_argument( "-o", "--outfile", type = argparse.FileType("w"), nargs = "?",
-    help="write the data into [OUTFILE]" )
+ap.add_argument( "-d", "--downsample", type = int, default = 0,
+    help="downsample 256 x DOWNSAMPLE" )
+ap.add_argument( "-o", "--outfile", type = argparse.FileType("w"),
+    help="write the data into OUTFILE" )
 ap.add_argument( "-r", "--rate", type = int, default = 20,
     help="sample rate in kS/s (20, 50, 64, 100, default: 20)" )
-ap.add_argument( "-t", "--time", type = float, default = 60,
-    help="capture time in seconds (default: 60.0)" )
+ap.add_argument( "-t", "--time", type = float, default = 1,
+    help="capture time in seconds (default: 1.0)" )
 ap.add_argument( "-x", "--ch1", type = int, default = 1,
     help="gain of channel 1 (1, 2, 5, 10, default: 1)" )
 ap.add_argument( "-y", "--ch2", type = int, default = 1,
@@ -63,10 +64,10 @@ if sample_rate not in valid_sample_rates:
 else:
     sample_rate = sample_rate * 1000 # kS/s -> S/s
 if ch1gain not in valid_gains:
-    print( "error, ch1gain must be one of:", valid_gains )
+    print( "error, ch1 gain must be one of:", valid_gains )
     argerror = True
 if ch2gain not in valid_gains:
-    print( "error, ch2gain must be one of:", valid_gains )
+    print( "error, ch2 gain must be one of:", valid_gains )
     argerror = True
 if argerror:
     sys.exit()
@@ -87,7 +88,6 @@ calibration = scope.get_calibration_values()
 
 # set interface: 0 = BULK, >0 = ISO, 1=3072,2=2048,3=1024 bytes per 125 us
 scope.set_interface( 0 ) # use BULK unless you have specific need for ISO xfer
-#print("ISO" if scope.is_iso else "BULK", "packet size =", scope.packetsize)
 
 scope.set_num_channels( channels )
 
@@ -103,22 +103,34 @@ scope.set_ch1_voltage_range( ch1gain )
 scope.set_ch2_voltage_range( ch2gain )
 
 
-########################################################
-# this callback is called every time data packet arrives
-# scale the data packets and write them into the file
+##########################################################
+# this callback is called every time a data packet arrives
+# scale the data packets and write them into the outfile
 #
-def packet_callback( ch1_data, ch2_data ):
-    global skip1st, start_time, timestep, tick
+def pcb( ch1_data, ch2_data ):
+    # define "static" variables
+    if 'av1' not in pcb.__dict__:
+        pcb.av1 = 0
+    if 'av2' not in pcb.__dict__:
+        pcb.av2 = 0
+    if 'timestep' not in pcb.__dict__:
+        pcb.timestep = 0
+    if 'slowdown' not in pcb.__dict__:
+        pcb.slowdown = 0
+
+    global skip1st, start_time, tick
     global totalsize, dc1, dc2, rms1, rms2
+
     size = len( ch1_data )
     if( size == 0 ):
         return
-    if skip1st: # skip the 1st block
+    if skip1st: # skip the 1st (unstable) block
         skip1st = False
         return
     totalsize = totalsize + size
     ch1_scaled = scope.scale_read_data( ch1_data, ch1gain, channel=1 )
     ch2_scaled = scope.scale_read_data( ch2_data, ch2gain, channel=2 )
+    # average over the block (256 byte), prepare AC/DC
     av1 = 0
     for value in ch1_scaled:
         av1 = av1 + value
@@ -131,61 +143,82 @@ def packet_callback( ch1_data, ch2_data ):
         dc2 = dc2 + value
         rms2 = rms2 + (value*value)
     av2 = av2 / size
-    if downsample:
-        if timestep < sample_time:
-            outfile.write( "{:<10.6g}, {:< 10.4g}, {:< 10.4g}\n".format( timestep, av1, av2 ) )
-        timestep = timestep + tick * size
-    else:
+    if downsample: # average further over more blocks
+        pcb.av1 = pcb.av1 + av1
+        pcb.av2 = pcb.av2 + av2
+        pcb.slowdown = pcb.slowdown + 1
+        if pcb.slowdown >= downsample:
+            pcb.slowdown = 0
+            pcb.av1 = pcb.av1 / downsample
+            pcb.av2 = pcb.av2 / downsample
+            if pcb.timestep < sample_time:
+                outfile.write( "{:<10.6g}, {:< 10.4g}, {:< 10.4g}\n".format( pcb.timestep, pcb.av1, pcb.av2 ) )
+            pcb.av1 = pcb.av2 = 0
+            pcb.timestep = pcb.timestep + tick * size * downsample
+    else: # write out every sample
         for ch1_value, ch2_value in zip( ch1_scaled, ch2_scaled ): # merge CH1 & CH2
-            if timestep < sample_time:
-                outfile.write( "{:<10.6g}, {:< 10.4g}, {:< 10.4g}\n".format( timestep, ch1_value, ch2_value ) )
-            timestep = timestep + tick
+            if pcb.timestep < sample_time:
+                outfile.write( "{:<10.6g}, {:< 10.4g}, {:< 10.4g}\n".format( pcb.timestep, ch1_value, ch2_value ) )
+            pcb.timestep = pcb.timestep + tick
 #
-########################################################
+##########################################################
 
 
 skip1st = True # marker for skip of 1st (unstable) packet
-tick = 1 / sample_rate
+tick = 1 / sample_rate # time between two samples
 totalsize = 0
 dc1 = dc2 = rms1 = rms2 = 0
 
 timestep = 0
-start_time = time.time() + scope.packetsize / sample_rate
-end_time = start_time + sample_time
+start_time = time.time() + scope.packetsize / sample_rate # correct the 1st skipped block
 
+# GO!
 scope.start_capture()
-shutdown_event = scope.read_async( packet_callback, scope.packetsize, outstanding_transfers=10, raw=True)
+shutdown_event = scope.read_async( pcb, scope.packetsize, outstanding_transfers=10, raw=True)
 
-# sample until time is over
-lastsec = 0
+# sample until time is over, show the progress
+lastsec = None
 while True:
     to_go = start_time + sample_time - time.time()
-    if to_go <= 0:
+    if to_go <=  - downsample * 256 * tick:
         break
     if int( to_go ) != lastsec:
-        if lastsec:
-            sys.stderr.write( "\rCapturing " + str(lastsec) + " seconds ...   " )
+        if None == lastsec:
+            sys.stderr.write( "\rCapturing " + str(sample_time) + " seconds ...    " )
+        elif lastsec > 0:
+            sys.stderr.write( "\rCapturing " + str(lastsec) + " seconds ...    " )
         else:
-            sys.stderr.write( "\rCapturing " + str(sample_time) + " seconds ...   " )
+            sys.stderr.write( "\rCapturing ...              " )
         lastsec = int( to_go )
         outfile.flush()
     scope.poll()
 
+# STOP!
 scope.stop_capture()
 shutdown_event.set()
 
 # fetch remaining packets before closing the scope (max 1024 * 50µs = 0.0512 s)
 time.sleep(0.1)
-
 scope.close_handle()
-sys.stderr.write( "\rCaptured data for "+ str(sample_time) + " second(s)\n" )
 
+if downsample: # calculate the effective sample rate
+    sample_rate = sample_rate / 256 / downsample
+sys.stderr.write( "\rCaptured data for {} second(s) @ {} S/s\n".format( sample_time, sample_rate) )
+
+# average of all samples (DC)
 dc1 = dc1 / totalsize
 dc2 = dc2 / totalsize
-rms1 = math.sqrt( rms1 / totalsize )
-rms2 = math.sqrt( rms2 / totalsize )
+# average of all samples² (RMS² = DC² + AC²)
+rms1 = rms1 / totalsize
+rms2 = rms2 / totalsize
+# sqrt of AC² (AC)
+ac1 = math.sqrt( rms1 - dc1 * dc1 )
+ac2 = math.sqrt( rms2 - dc2 * dc2 )
+# sqrt of RMS² (RMS)
+rms1 = math.sqrt( rms1 )
+rms2 = math.sqrt( rms2 )
 
-sys.stderr.write( "CH1: DC = {:8.4f} V, RMS = {:8.4f} V\n".format( dc1, rms1 ) )
-sys.stderr.write( "CH2: DC = {:8.4f} V, RMS = {:8.4f} V\n".format( dc2, rms2 ) )
+sys.stderr.write( "CH1: DC = {:8.4f} V, AC = {:8.4f} V, RMS = {:8.4f} V\n".format( dc1, ac1, rms1 ) )
+sys.stderr.write( "CH2: DC = {:8.4f} V, AC = {:8.4f} V, RMS = {:8.4f} V\n".format( dc2, ac2, rms2 ) )
 
 outfile.close()

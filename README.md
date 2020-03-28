@@ -169,17 +169,21 @@ You can then write your own programs, or look at the current channel 1 scope tra
 
 The program `capture_6022.py` (also in `/usr/local/bin/`) allows to capture both channels over a long time.
 
-The 256x downsampling option increases the SNR and effective resolution (8bit -> 12 bit) and allows very long time recording.
+The 256 x downsampling option increases the SNR and effective resolution (8bit -> at least 12 bit) and allows very long time recording.
 The program uses the offset and gain calibration from EEPROM.
-It writes the captured data into `captured.out` and calculates DC and RMS of the data.
+It writes the captured data into stdout or an outfile and calculates DC, AC and RMS of the data.
 
-    usage: capture_6022.py [-h] [-d] [-r RATE] [-t TIME] [-x CH1] [-y CH2]
+    usage: capture_6022.py [-h] [-d DOWNSAMPLE] [-o OUTFILE] [-r RATE] [-t TIME]
+                           [-x CH1] [-y CH2]
 
     optional arguments:
       -h, --help            show this help message and exit
-      -d, --downsample      downsample 256x
+      -d DOWNSAMPLE, --downsample DOWNSAMPLE
+                            downsample 256 x DOWNSAMPLE
+      -o OUTFILE, --outfile OUTFILE
+                            write the data into OUTFILE
       -r RATE, --rate RATE  sample rate in kS/s (20, 50, 64, 100, default: 20)
-      -t TIME, --time TIME  capture time in seconds (default: 60)
+      -t TIME, --time TIME  capture time in seconds (default: 1.0)
       -x CH1, --ch1 CH1     gain of channel 1 (1, 2, 5, 10, default: 1)
       -y CH2, --ch2 CH2     gain of channel 2 (1, 2, 5, 10, default: 1)
 
