@@ -18,11 +18,11 @@
 
 # change location of fx2libdir if needed
 FX2LIBDIR=../fx2lib
-SOURCES=scope6022.c
-C_INCS=../custom_BE/scope6022.inc ../custom_BE/waveforms.inc
+SOURCES=dds120.c
+C_INCS=../DSO6022BE/scope6022.inc ../DSO6022BE/waveforms.inc
 A51_SOURCES=descriptor.asm
-A_INCS=../custom_BE/descriptor.inc
-BASENAME=dso6022bl-firmware
+A_INCS=../DSO6022BE/descriptor.inc
+BASENAME=dds120-firmware
 
 
 DSCR_AREA=-Wl"-b DSCR_AREA=0x3d00"
@@ -31,5 +31,5 @@ CODE_SIZE=--code-size 0x3c00
 XRAM_LOC=--xram-loc 0x3c00
 XRAM_SIZE=--xram-size 0x0100
 
-include ../custom_BE/fx2.mk
+include ../DSO6022BE/fx2.mk
 

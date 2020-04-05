@@ -1,17 +1,23 @@
-all: fw_custom_BE fw_custom_BL fx2upload
+all: fw_DSO6022BE fw_DSO6022BL fw_DDS120 fx2upload
 
-BE=PyHT6022/HantekFirmware/custom_BE
-BL=PyHT6022/HantekFirmware/custom_BL
-BEb=$(BE)/build
-BLb=$(BL)/build
+BE=PyHT6022/HantekFirmware/DSO6022BE
+BL=PyHT6022/HantekFirmware/DSO6022BL
+DDS=PyHT6022/HantekFirmware/DDS120
+#BEb=$(BE)/build
+#BLb=$(BL)/build
+#DDSb=$(DDS)/build
 
-.PHONY: fw_custom_BL
-fw_custom_BE:
+.PHONY: fw_DSO6022BE
+fw_DSO6022BE:
 	cd $(BE) && make
 
-.PHONY: fw_custom_BL
-fw_custom_BL:
+.PHONY: fw_DSO6022BL
+fw_DSO6022BL:
 	cd $(BL) && make
+
+.PHONY: fw_DDS120
+fw_DDS120:
+	cd $(DDS) && make
 
 .PHONY: fx2upload
 fx2upload:
@@ -35,15 +41,18 @@ debinstall: deb
 
 .PHONY: clean
 clean:
-	-rm *~ .*~ 
+	-rm *~ .*~
 	( cd $(BE) && make clean )
 	( cd $(BL) && make clean )
+	( cd $(DDS) && make clean )
 	( cd fx2upload && make clean )
 
 
 .PHONY: xfer
 xfer:
-	cp PyHT6022/HantekFirmware/custom_BE/dso6022be-firmware.hex \
+	cp $(BE)/dso6022be-firmware.hex \
 	../OpenHantek/OpenHantek6022/openhantek/res/firmware
-	cp PyHT6022/HantekFirmware/custom_BL/dso6022bl-firmware.hex \
+	cp $(BL)/dso6022bl-firmware.hex \
+	../OpenHantek/OpenHantek6022/openhantek/res/firmware
+	cp $(DDS)/dds120-firmware.hex \
 	../OpenHantek/OpenHantek6022/openhantek/res/firmware

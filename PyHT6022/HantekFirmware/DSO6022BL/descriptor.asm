@@ -23,7 +23,7 @@ VER = 0x0602	; FW version 0x0205
 POWER = 500/2	; Max 500 mA (1=2mA)
 
 
-.include "../../custom_BE/descriptor.inc"
+.include "../../DSO6022BE/descriptor.inc"
 
 
 ; -----------------------------------------------------------------------------

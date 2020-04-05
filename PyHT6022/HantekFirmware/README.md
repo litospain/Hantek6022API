@@ -22,8 +22,8 @@ Provided are different FW flavours as part of the python package:
 | stock_firmware     | stock/stock_fw.ihex          | Firmware that was originally uploaded to the device by vendor SW |
 | mod_firmware_01    | modded/mod_fw_01.ihex        | Patched stock firmware with sample rate and stability improvements |
 | mod_firmware_iso   | modded/mod_fw_iso.ihex       | Patched stock firmware that allows isochronous transfer (instead of bulk) |
-| custom_firmware_BE | custom_BE/dso6022be-firmware.hex | backported from sigrok-fw |
-| custom_firmware_BL | custom_BL/dso6022bl-firmware.hex | backported from sigrok-fw |
+| custom_firmware_BE | DSO6022BE/dso6022be-firmware.hex | backported from sigrok-fw |
+| custom_firmware_BL | DSO6022BL/dso6022bl-firmware.hex | backported from sigrok-fw |
 
 Default:
     default_firmware = custom_firmware = custom_firmware_BE

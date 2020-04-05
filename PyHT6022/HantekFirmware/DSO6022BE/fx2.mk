@@ -51,8 +51,8 @@ BUILDDIR?=build
 FX2LIBDIR?=$(dir $(lastword $(MAKEFILE_LIST)))../
 
 RELS=$(addprefix $(BUILDDIR)/, $(addsuffix .rel, $(notdir $(basename $(SOURCES) $(A51_SOURCES)))))
-# these are pretty good settings for most firmwares.  
-# Have to be careful with memory locations for 
+# these are pretty good settings for most firmwares
+# Have to be careful with memory locations for
 # firmwares that require more xram etc.
 CC = sdcc -mmcs51 \
 	$(SDCCFLAGS) \
@@ -115,7 +115,6 @@ load: $(BUILDDIR)/$(BASENAME).bix
 	fx2load -v $(VID) -p $(PID) $(BUILDDIR)/$(BASENAME).bix
 
 clean:
-	rm *~
-	( cd $(BUILDDIR) && rm -f *.asm *.bix *.hex *.ihx *.lk *.lst *.map *.mem *.rel *.rst *.sym )
-
+	-rm *~
+	-( cd $(BUILDDIR) && rm -f *.asm *.bix *.hex *.ihx *.lk *.lst *.map *.mem *.rel *.rst *.sym )
 
