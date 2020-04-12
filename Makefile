@@ -1,8 +1,9 @@
-all: fw_DSO6022BE fw_DSO6022BL fw_DDS120 fx2upload
+all: fw_DSO6022BE fw_DSO6022BL fw_DDS120 fw_ISDS205B fx2upload
 
 BE=PyHT6022/HantekFirmware/DSO6022BE
 BL=PyHT6022/HantekFirmware/DSO6022BL
 DDS=PyHT6022/HantekFirmware/DDS120
+ISDS=PyHT6022/HantekFirmware/ISDS205B
 #BEb=$(BE)/build
 #BLb=$(BL)/build
 #DDSb=$(DDS)/build
@@ -18,6 +19,10 @@ fw_DSO6022BL:
 .PHONY: fw_DDS120
 fw_DDS120:
 	cd $(DDS) && make
+
+.PHONY: fw_ISDS205B
+fw_ISDS205B:
+	cd $(ISDS) && make
 
 .PHONY: fx2upload
 fx2upload:
@@ -45,6 +50,7 @@ clean:
 	( cd $(BE) && make clean )
 	( cd $(BL) && make clean )
 	( cd $(DDS) && make clean )
+	( cd $(ISDS) && make clean )
 	( cd fx2upload && make clean )
 
 
